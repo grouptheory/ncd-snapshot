@@ -183,25 +183,15 @@ void initTables(MYSQL *conn)
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
 		
-	fprintf(stderr,"\tDropping view %s\n","AnomalyQueryNumber");
-	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "AnomalyQueryNumber");
+	fprintf(stderr,"\tDropping view %s\n","Anomaly_Number_Collabrators");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "Anomaly_Number_Collabrators");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 
-	fprintf(stderr,"\tCreating view %s\n","AnomalyQueryNumber");
-	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_AnomalyQueryNumber);
+	fprintf(stderr,"\tCreating view %s\n","Anomaly_Number_Collabrators");
+	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_Anomaly_Number_Collabrators);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-
-	fprintf(stderr,"\tDropping view %s\n","AnomalyQueryNumber");
-	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "AnomalyQueryNumber");
-	if (mysql_query(conn,sqlbuffer) != 0)
-		mysql_print_error(conn);
-
-	fprintf(stderr,"\tCreating view %s\n","AnomalyQueryNumber");
-	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_AnomalyQueryNumber);
-	if (mysql_query(conn,sqlbuffer) != 0)
-		mysql_print_error(conn);			
 	
 	fprintf(stderr,"\tDropping view %s\n","AnomalyJoin");
 	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "AnomalyJoin");
@@ -213,13 +203,13 @@ void initTables(MYSQL *conn)
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 
-	fprintf(stderr,"\tDropping view %s\n","AnomalyImageSimilarityScore");
-	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "AnomalyImageSimilarityScore");
+	fprintf(stderr,"\tDropping view %s\n","Anomaly_Sum_of_Anomaly_Levels");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "Anomaly_Sum_of_Anomaly_Levels");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 
-	fprintf(stderr,"\tCreating view %s\n","AnomalyImageSimilarityScore");
-	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_AnomalyImageSimilarityScore);
+	fprintf(stderr,"\tCreating view %s\n","Anomaly_Sum_of_Anomaly_Levels");
+	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_Anomaly_Sum_of_Anomaly_Levels);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 		
