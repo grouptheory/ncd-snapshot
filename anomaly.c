@@ -418,9 +418,9 @@ int main(int argc, char *argv[] )
 
 		if(SHOW_AnomalyCurve == 1) showTable(conn, "AnomalyCurve", limit_value);
 		if(SHOW_AnomalyQueryStart == 1) showTable(conn, "AnomalyQueryStart", limit_value);
-		if(SHOW_AnomalyQueryNumber == 1) showTable(conn, "AnomalyQueryNumber", limit_value);
+		if(SHOW_AnomalyQueryNumber == 1) showTable(conn, "Anomaly_Number_Collabrators", limit_value);
 		if(SHOW_AnomalyJoin == 1) showTable(conn, "AnomalyJoin", limit_value);		
-	    showTable(conn, "AnomalyImageSimilarityScore", limit_value);
+	    showTable(conn, "Anomaly_Sum_of_Anomaly_Levels", limit_value);
 	}
      //Sql End
       mysql_close(conn);
