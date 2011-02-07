@@ -94,19 +94,19 @@ AND n.querynumber = (select query FROM AnomalyConfig) \
 AND ncd_normal <= (select cutoff FROM AnomalyConfig) \
 ORDER BY IMG1, F1;"
 
-#define CREATE_AnomalyQueryNumber "\
-CREATE VIEW AnomalyQueryNumber AS \
+#define CREATE_Anomaly_Number_Collabrators "\
+CREATE VIEW Anomaly_Number_Collabrators AS \
 select DISTINCT IMG1, F1, COUNT(IMG2) As NUM FROM AnomalyQueryStart GROUP BY F1;"
 
 #define CREATE_AnomalyJoin "\
 CREATE VIEW AnomalyJoin AS \
 SELECT A.IMG1, A.F1, C.anomaly \
-FROM AnomalyQueryNumber AS A \
+FROM Anomaly_Number_Collabrators AS A \
 JOIN AnomalyCurve AS C \
 WHERE A.NUM = C.number;"
 
-#define CREATE_AnomalyImageSimilarityScore "\
-CREATE VIEW AnomalyImageSimilarityScore AS \
+#define CREATE_Anomaly_Sum_of_Anomaly_Levels "\
+CREATE VIEW Anomaly_Sum_of_Anomaly_Levels AS \
 SELECT IMG1, ROUND(SUM(anomaly),3) AS Similar FROM AnomalyJoin GROUP BY IMG1; "
 
 #define CREATE_COLLABRATION_CONFIG "\
