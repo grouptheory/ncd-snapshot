@@ -4,7 +4,7 @@ LIBS = -lssl -L/usr/lib/mysql/ -lmysqlclient
 
 DEFINES = -DDEFAULT_USER=\"snapshot\" -DDEFAULT_PASS=\"snapshot\" -DNOSPIN
 
-all: snapshot query ncd simpleshowdata anomaly collaboration anomaly-curve
+all: snapshot query ncd simpleshowdata anomaly collaboration anomaly-curve company
 
 snapshot:
 	$(CC)  snapshot.c hashFunctions.c mysql.c -o snapshot $(LIBS) $(DEFINES)
@@ -27,6 +27,9 @@ collaboration:
 anomaly-curve:
 	$(CC)  anomaly-curve.c mysql.c -o anomaly-curve $(LIBS) $(DEFINES)
 
+company: 
+	$(CC)  company.c -o company
+
 	
 clean:
 	rm snapshot 
@@ -36,3 +39,4 @@ clean:
 	rm anomaly
 	rm collaboration
 	rm anomaly-curve
+	rm company
