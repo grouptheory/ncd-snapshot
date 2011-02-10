@@ -1,3 +1,18 @@
+/*
+
+
+
+Changes:
+2/9
+Added new (predictable)  random string function to replace the use of /dev/urandom - provides UPPER and LOWER bound selection
+Created Srand function and supporting options to replace the use of the standard srand fuction - in order to recreate results at will
+Change Modify Offset to use randomString function - changed upper/lower bound to 1,0 (creating a string of zeros) //As suggested by professor
+	This still leaves open the option to have a randomly sized modification
+Added a command line option for Consipiracy Size Group
+	
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +39,7 @@
 // parameters defining number of members in a group
 #define MINGROUPSIZE 5
 #define MAXGROUPSIZE 10
-#define CONSPIRACYSIZE 2
+int CONSPIRACYSIZE = 2;
 
 // parameters defining number of files shared by group members
 #define NUMSYSTEMFILES 10
@@ -37,11 +52,30 @@
 
 //Random and File Arguments
 #define RANDOM_SOURCE "/dev/urandom"
-#define RANDOM_SIZE 64000
+#define RANDOM_SIZE 65536
 #define BLOCK 8192
 
 //File Change Arguments
 #define PERCENT_CHANGE 10
+
+#define DEFAULT_SRANDNAME "SEEDS"
+
+
+//Random Bytes to use during file creation
+#define UPPERBOUND 255
+#define LOWERBOUND 0
+
+//Modify chunk size bounds
+#define MOD_UPPER 8192
+#define MOD_LOWER 8192
+
+struct Srand_Struct {
+	char filename[PATH_MAX];
+	int readwrite;
+	FILE *file;
+};
+typedef struct Srand_Struct Srand_Struct;
+Srand_Struct SrandStruct;
 
 
 //================================================
@@ -77,6 +111,35 @@ int doPickFileByDirSearch(char *,  char *);
 int doModify(char *, char *, int, ssize_t);
 int doModifyRandOffset(char *, char *, ssize_t);
 
+
+int Srand(Srand_Struct *S)
+{
+
+	long unsigned int seed;
+	size_t io;
+	
+	if(S->file == NULL) 
+		if(S->readwrite == 0) { if( (S->file = fopen(S->filename, "wb")) == NULL) {printf("Error opening %s\n", S->filename); exit(1);}}
+		else { if( (S->file = fopen(S->filename, "rb")) == NULL) {printf("Error opening %s\n", S->filename); exit(1);}}
+		
+	if(S->readwrite == 0) {
+		//write new and seed
+		seed = (long unsigned int) (time(NULL) & rand());
+		io = fwrite(&seed, sizeof(long unsigned int), 1, S->file);
+		if(io == 0) {printf("Failed to write to file %s\n",S->filename); exit(1); }
+		srand(seed);
+	}
+	else
+	{
+		io = fread(&seed, sizeof(long unsigned int), 1, S->file);
+		if(io == 0) {printf("Failed to read from file %s\n",S->filename); exit(1); }
+		srand(seed);	
+	}
+	printf("Intialize SRAND with: %lu\n",seed);
+	
+	return 0;
+} // SRand
+
 //================================================
 // SOURCE 
 //================================================
@@ -96,6 +159,17 @@ Person* makePerson(int i, int CREATENEW) {
 
   // To do: initialize other fields as needed
   return p;
+}
+
+
+int randomString( char *rstring, int size, int upper, int lower)
+{
+	int count;
+	for(count = 0; count < size; count++)
+    {
+        rstring[count] = (char)((rand() % (upper-lower)) + lower);
+    }
+	return count;
 }
 
 //================================================
@@ -138,12 +212,14 @@ Group* makeGroup(int i, int gsize, int files, Person** people, int CREATENEW) {
 		{ 
 			//Make Random File
 			totalbytes=0;
-			if( (fdin = open(RANDOM_SOURCE, O_RDONLY)) < 0) { fprintf(stderr,"Can't open RANDOM file. %s\n",RANDOM_SOURCE); }
+			//if( (fdin = open(RANDOM_SOURCE, O_RDONLY)) < 0) { fprintf(stderr,"Can't open RANDOM file. %s\n",RANDOM_SOURCE); }
 			snprintf(startfilename, PATH_MAX,"%s/group%d-file%d",g->members[0]->dir,i,f);
 			if( (fdout = creat(startfilename, S_IRUSR | S_IWUSR )) < 0) { fprintf(stderr,"Can't create file. %s\n",startfilename); }
-			while( ((readbytes = read(fdin, buffer, BLOCK)) > 0 ) && totalbytes < RANDOM_SIZE )
+			//while( ((readbytes = read(fdin, buffer, BLOCK)) > 0 ) && totalbytes < RANDOM_SIZE )
+			while( totalbytes < RANDOM_SIZE )
 			{
-				if( (writebytes=write(fdout, buffer, BLOCK)) != readbytes) {fprintf(stderr,"Error writting to output file %s.\n", startfilename); }	
+				readbytes = randomString(buffer, BLOCK, UPPERBOUND, LOWERBOUND);
+				if( (writebytes=write(fdout, buffer, BLOCK)) != readbytes) {fprintf(stderr,"Error writting to output file %s (%d/%d).\n", startfilename, readbytes, writebytes); }	
 				totalbytes += writebytes;
 			}
 			if(readbytes<0) {fprintf(stderr,"Error reading data. %s\n",RANDOM_SOURCE);}
@@ -222,7 +298,7 @@ int doPickFileByDirSearch(char *CWD,  char *filename)
 	}//while get dcount
 	
 	if(fcount == 0) {printf("No Files found in %s\n",CWD); return 2;}
-	srand ( time(NULL) + rand());
+	Srand (&SrandStruct);
     randnum = (rand() % fcount) + 1;
 	rewinddir(dp);
 	count = 0;
@@ -300,7 +376,7 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	off_t eofbytes = 0;
 	off_t startoff = 0;
 	
-	srand ( time(NULL) + rand() );
+	Srand (&SrandStruct);
 	char fullfilename[PATH_MAX+1];
 	snprintf(fullfilename, PATH_MAX,"%s/%s",userdir,filename); 	
 	
@@ -315,10 +391,7 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	
 	if ( (lseek(fd, startoff, SEEK_SET)) == -1 ) {printf("Error seeking to random offset %d on %s.",startoff, filename); return -1; }	
 	
-	for(count = 0; count <= modsize; count++)
-	{
-		filebuffer[count] = (rand() % 255);
-	}
+	randomString(filebuffer, modsize, 1, 0);
 	
 	if( (write(fd, filebuffer, modsize)) != modsize) {fprintf(stderr,"Error writting to output file %s.\n",filename); }	
 	close(fd);
@@ -343,7 +416,7 @@ int doPickFileByMemory(Person* p, int* groupfiles, char *filename)
 		max += groupfiles[p->groups[i]->group_id];
 	}
 
-	srand ( time(NULL) + rand() );
+	Srand (&SrandStruct);
 	filenum = rand() % max;
 	
 	for(i = 0; i < p->num_groups;i++)
@@ -366,9 +439,12 @@ int doPickFileByMemory(Person* p, int* groupfiles, char *filename)
 void simPerson(Person* p, int *gf) {
 
 short MAX = 1;
-short MAXBYTES = 1000;
 char filename[PATH_MAX+1];
-short numbytes = (rand() % (MAXBYTES - 99)) + 100;
+int numbytes;
+int upper = MOD_UPPER; // prevent div 0 error on compile
+
+if(MOD_UPPER == MOD_LOWER) numbytes = MOD_UPPER;
+else numbytes = (rand() % (upper - MOD_LOWER)) + MOD_LOWER;
 
   printf("*** simulating person %d\n",p->person_id);
 	switch((rand() % MAX) + 1)
@@ -396,8 +472,12 @@ void printhelp(char *filename)
 	printf("Work Group file Simulation Version %s.\n",VERSION);
 	printf("Bilal Khan\tRichard Alcalde \n"); 
 	printf("Usage: ./%s [OPTIONS]\n",filename);
-	printf("\t-s, --seed\t\tUse a previously created seed.\n\t\t\t\tExample --seed 1234567\n");	
+	printf("\t-S, --srandomfile\t\tFilename of SRAND seed store.\n\t\t\t\t\tDefault %s\n", DEFAULT_SRANDNAME);	
+	printf("\t-R, --srandomread\t\tInstead of creating new SRAND seeds, use values from file.\n\t\t\t\t\n");	
+	printf("\t-s, --seed\t\tUse a previously created seed for intial group creation.\n\t\t\t\tExample --seed 1234567\n");	
+	printf("\t-c, --create\tCreate files - required for first run.\n\t\t\t\t\n");
 	printf("\t-d, --duration\tHow many iterations on this simulation.\n\t\t\t\tExample --duration 1\tDefault: %d\n", DEFAULT_SIMDURATION);
+	printf("\t-C, --conspiracysize\tHow many people in the conspiract group.\tDefault: %d\n", CONSPIRACYSIZE);
 	printf("\t-h, --help\t This help page.\n");
 	
 }
@@ -405,8 +485,12 @@ void printhelp(char *filename)
 struct option long_options[] =
 {
    {"help", no_argument, NULL, 'h'},
+   {"create", no_argument, NULL, 'c'},
    {"duration", required_argument, NULL, 'd'},
    {"seed", required_argument, NULL, 's'},
+   {"srandomfile", required_argument, NULL, 'S'},
+   {"srandomread", no_argument, NULL, 'R'},
+   {"conspiracysize", required_argument, NULL, 'C'},
    { 0, 0, 0, 0 }
 }; //long options
 
@@ -418,13 +502,16 @@ int main(int argc, char** argv) {
 	int * groupsizes;
 	int * groupfiles;
 	//Getopts
-	char tempstring[20];
+	char tempstring[PATH_MAX];
 	int input, option_index;
 	int SIMDURATION = DEFAULT_SIMDURATION;
 	int SEED = 0;
-	short CREATENEW = 1;
+
+	short CREATENEW = 0;
+	strncpy(SrandStruct.filename, DEFAULT_SRANDNAME, PATH_MAX);
+	SrandStruct.readwrite = 0;
   
-	while((input = getopt_long(argc, argv, "hs:d:", long_options, &option_index)) != EOF )
+	while((input = getopt_long(argc, argv, "hs:d:S:RcC:", long_options, &option_index)) != EOF )
 	{
 		switch(input)
 		{
@@ -440,8 +527,21 @@ int main(int argc, char** argv) {
 		case 's' :
 		strncpy(tempstring,optarg,19);
 		SEED = atoi(tempstring);
-		CREATENEW = 0;
 		if(SEED < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+		break;
+		case 'R' :
+		SrandStruct.readwrite = 1;
+		break;
+		case 'S' :
+		strncpy(SrandStruct.filename, optarg, PATH_MAX);		
+		break;		
+		case 'c':
+		CREATENEW = 1;
+		break;
+		case 'C' :
+		strncpy(tempstring,optarg,19);
+		CONSPIRACYSIZE = atoi(tempstring);
+		if(CONSPIRACYSIZE < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
 		break;
 		}//switch
 			
