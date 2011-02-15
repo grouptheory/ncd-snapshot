@@ -61,7 +61,7 @@ delta_modify TINYINT(1),\
 delta_access TINYINT(1),\
 delta_create TINYINT(1),\
 delta_size TINYINT(1),\
-compare_file BIGINT\
+compare_file BIGINT,\
 best_effort INT\
 );"
 
