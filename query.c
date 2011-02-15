@@ -109,7 +109,7 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	 
 	fprintf(stderr,"Creating new query and inserting it into the NCD Table.\n");
    // if(GLOBAL_VERBOSE) printf("Verbose Output:%s\n",sqlbuffer);
-	printf("Query %s\n",sqlbuffer);	    
+	//printf("Query %s\n",sqlbuffer);	    
 
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
@@ -302,7 +302,7 @@ int pickQuery(MYSQL *conn, char *query_number, int case_num, int file_num)
 					mysql_print_error(conn);
 	}
 	
-	snprintf(second_sqlbuffer, BIGBUFFER,"INSERT INTO %s (querynumber, casenumber, delta_time_threshold, delta_size_threshold, delta_unit, delta_modify, delta_access, delta_create, delta_size, compare_file) VALUES (\"%d\",\"%d\",\"%d\",\"%d\",\"%s\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\");", QUERY_TABLENAME, query_num, case_num, GLOBAL_TIME_THRESHOLD, GLOBAL_SIZE_THRESHOLD, GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_DELTA_MODIFY, GLOBAL_DELTA_ACCESS, GLOBAL_DELTA_CREATE, GLOBAL_DELTA_SIZE, file_num, GLOBAL_BESTMATCHING);
+	snprintf(second_sqlbuffer, BIGBUFFER,"INSERT INTO %s (querynumber, casenumber, delta_time_threshold, delta_size_threshold, delta_unit, delta_modify, delta_access, delta_create, delta_size, compare_file, best_effort) VALUES (\"%d\",\"%d\",\"%d\",\"%d\",\"%s\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\");", QUERY_TABLENAME, query_num, case_num, GLOBAL_TIME_THRESHOLD, GLOBAL_SIZE_THRESHOLD, GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_DELTA_MODIFY, GLOBAL_DELTA_ACCESS, GLOBAL_DELTA_CREATE, GLOBAL_DELTA_SIZE, file_num, GLOBAL_BESTMATCHING);
 
 	if (mysql_query(conn,second_sqlbuffer) != 0)
 		mysql_print_error(conn);
@@ -525,7 +525,6 @@ int main(int argc, char *argv[] )
     int krepeat = 0;
 	int item_num;
 	sprintf(GLOBAL_TIME_THRESHOLD_TYPE,"MINUTE");
-
     
     
     //Setup For OpenSSL Hash
