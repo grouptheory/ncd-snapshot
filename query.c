@@ -67,8 +67,10 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	unsigned long long counter = 0;
 	int besteffort = 0;
 
-	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item, (0 ");
-		if(GLOBAL_DELTA_ACCESS == 1)
+	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item As BE FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND (0 + ",DRIVE_TABLENAME, casenum, casenum);
+	
+
+	if(GLOBAL_DELTA_ACCESS == 1)
 		{
 			snprintf(second_sqlbuffer,BIGBUFFER," + (ABS(TIMESTAMPDIFF(%s,a.timestamp_access, b.timestamp_access)) < %d) ", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
 			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
@@ -95,9 +97,9 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	
 	if(GLOBAL_BESTMATCHING > 0) besteffort = GLOBAL_BESTMATCHING;
 	
-	snprintf(second_sqlbuffer,BIGBUFFER," ) As BE FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND BE >= %d",DRIVE_TABLENAME, casenum, casenum, besteffort);
+	snprintf(second_sqlbuffer,BIGBUFFER," ) >= %d ", GLOBAL_BESTMATCHING);
 	strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
-
+	
 	if(GLOBAL_COMPARE == 1)
 		{
 			snprintf(second_sqlbuffer,BIGBUFFER," AND a.item = %d",item_num);
