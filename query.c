@@ -49,7 +49,7 @@ int GLOBAL_DELTA_MODIFY = 0;
 int GLOBAL_DELTA_CREATE = 0;
 int GLOBAL_DELTA_SIZE = 0;
 int GLOBAL_COMPARE = 0;
-
+int GLOBAL_BESTMATCHING = 0;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 
 
@@ -65,39 +65,49 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	float ncd = 0;
 	short int spot;	
 	unsigned long long counter = 0;
-	
+	int besteffort = 0;
 
-	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd'",DRIVE_TABLENAME, casenum, casenum);
+	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item, (0 ");
+		if(GLOBAL_DELTA_ACCESS == 1)
+		{
+			snprintf(second_sqlbuffer,BIGBUFFER," + (ABS(TIMESTAMPDIFF(%s,a.timestamp_access, b.timestamp_access)) < %d) ", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
+			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
+			besteffort++;
+		}
+	if(GLOBAL_DELTA_MODIFY == 1)
+		{
+			snprintf(second_sqlbuffer,BIGBUFFER," + (ABS(TIMESTAMPDIFF(%s,a.timestamp_modify, b.timestamp_modify)) < %d)", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
+			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
+			besteffort++;
+		}
+	if(GLOBAL_DELTA_CREATE == 1)
+		{
+			snprintf(second_sqlbuffer,BIGBUFFER," + (ABS(TIMESTAMPDIFF(%s,a.timestamp_create, b.timestamp_create)) < %d)", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
+			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
+			besteffort++;
+		}
+	if(GLOBAL_DELTA_SIZE == 1)
+		{
+			snprintf(second_sqlbuffer,BIGBUFFER," + ( ABS(CAST(a.file_size - b.file_size AS SIGNED)) < %d)", GLOBAL_SIZE_THRESHOLD);
+			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
+			besteffort++;
+		}
+	
+	if(GLOBAL_BESTMATCHING > 0) besteffort = GLOBAL_BESTMATCHING;
+	
+	snprintf(second_sqlbuffer,BIGBUFFER," ) As BE FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND BE >= %d",DRIVE_TABLENAME, casenum, casenum, besteffort);
+	strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
 
 	if(GLOBAL_COMPARE == 1)
 		{
 			snprintf(second_sqlbuffer,BIGBUFFER," AND a.item = %d",item_num);
 			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
 		}
-	if(GLOBAL_DELTA_ACCESS == 1)
-		{
-			snprintf(second_sqlbuffer,BIGBUFFER," AND ABS(TIMESTAMPDIFF(%s,a.timestamp_access, b.timestamp_access)) < %d", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
-			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
-		}
-	if(GLOBAL_DELTA_MODIFY == 1)
-		{
-			snprintf(second_sqlbuffer,BIGBUFFER," AND ABS(TIMESTAMPDIFF(%s,a.timestamp_modify, b.timestamp_modify)) < %d", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
-			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
-		}
-	if(GLOBAL_DELTA_CREATE == 1)
-		{
-			snprintf(second_sqlbuffer,BIGBUFFER," AND ABS(TIMESTAMPDIFF(%s,a.timestamp_create, b.timestamp_create)) < %d", GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_TIME_THRESHOLD);
-			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
-		}
-	if(GLOBAL_DELTA_SIZE == 1)
-		{
-			snprintf(second_sqlbuffer,BIGBUFFER," AND ABS(CAST(a.file_size - b.file_size AS SIGNED)) < %d", GLOBAL_SIZE_THRESHOLD);
-			strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
-		}
+
 	 
 	fprintf(stderr,"Creating new query and inserting it into the NCD Table.\n");
    // if(GLOBAL_VERBOSE) printf("Verbose Output:%s\n",sqlbuffer);
-	//printf("Query %s\n",sqlbuffer);	    
+	printf("Query %s\n",sqlbuffer);	    
 
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
@@ -289,7 +299,8 @@ int pickQuery(MYSQL *conn, char *query_number, int case_num, int file_num)
 		if (mysql_query(conn,second_sqlbuffer) != 0)
 					mysql_print_error(conn);
 	}
-	snprintf(second_sqlbuffer, BIGBUFFER,"INSERT INTO %s (querynumber, casenumber, delta_time_threshold, delta_size_threshold, delta_unit, delta_modify, delta_access, delta_create, delta_size, compare_file) VALUES (\"%d\",\"%d\",\"%d\",\"%d\",\"%s\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\");", QUERY_TABLENAME, query_num, case_num, GLOBAL_TIME_THRESHOLD, GLOBAL_SIZE_THRESHOLD, GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_DELTA_MODIFY, GLOBAL_DELTA_ACCESS, GLOBAL_DELTA_CREATE, GLOBAL_DELTA_SIZE, file_num);
+	
+	snprintf(second_sqlbuffer, BIGBUFFER,"INSERT INTO %s (querynumber, casenumber, delta_time_threshold, delta_size_threshold, delta_unit, delta_modify, delta_access, delta_create, delta_size, compare_file) VALUES (\"%d\",\"%d\",\"%d\",\"%d\",\"%s\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\",\"%d\");", QUERY_TABLENAME, query_num, case_num, GLOBAL_TIME_THRESHOLD, GLOBAL_SIZE_THRESHOLD, GLOBAL_TIME_THRESHOLD_TYPE, GLOBAL_DELTA_MODIFY, GLOBAL_DELTA_ACCESS, GLOBAL_DELTA_CREATE, GLOBAL_DELTA_SIZE, file_num, GLOBAL_BESTMATCHING);
 
 	if (mysql_query(conn,second_sqlbuffer) != 0)
 		mysql_print_error(conn);
@@ -447,6 +458,7 @@ struct option long_options[] =
   {"delta-create", no_argument, NULL, 'C'},
   {"delta-size-threshold", required_argument, NULL, 'T'},
   {"delta-size", no_argument, NULL, 'S'},
+  {"besteffort", required_argument, NULL, 'b'},
 
   { 0, 0, 0, 0 }
 }; //long options
@@ -477,6 +489,7 @@ void printhelp()
 	printf("\t-C, --delta-create\t\t Match files using the delta of the created timestamp.\n");
 	printf("\t-T, --delta-size-threshold\t Minimal Threshold used for file size matching. (Bytes) Default: %d\n",GLOBAL_SIZE_THRESHOLD);
 	printf("\t-S, --delta-size\t\t Match files using the delta of two different file sizes.\n");
+	printf("\t-b, --besteffort\t\t Number of options to match. (Best Effort) The default is to match all options.\n");
     printf("\t-h, --help\t\t\t This help page.\n");
   
 }
@@ -510,7 +523,7 @@ int main(int argc, char *argv[] )
     int krepeat = 0;
 	int item_num;
 	sprintf(GLOBAL_TIME_THRESHOLD_TYPE,"MINUTE");
-	
+
     
     
     //Setup For OpenSSL Hash
@@ -522,7 +535,7 @@ int main(int argc, char *argv[] )
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hH:u:R:Q:qK:D:T:p:P:O:Ic:MACSvU:", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hH:u:R:Q:qK:D:T:p:P:O:Ic:MACSvU:b:", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -611,7 +624,15 @@ int main(int argc, char *argv[] )
 				else if(!strncasecmp(tempstring, "YEAR", 4)) {		sprintf(GLOBAL_TIME_THRESHOLD_TYPE,"YEAR");}
 				else {printf("Invalid Options. Using default. Valid options are FRAC_SECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, and YEAR.\n");}
 			break;
-			
+			case 'b' :
+			  strncpy(tempstring,optarg,19);
+			  GLOBAL_BESTMATCHING = atoi(tempstring);
+			  if(GLOBAL_BESTMATCHING <= 0)
+			  {
+				fprintf(stderr,"Error reading best effor matching value Using default.\n"); 
+				GLOBAL_BESTMATCHING = 0;
+			  }
+			  break;
 		  
     }//switch      
      
