@@ -67,7 +67,7 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	unsigned long long counter = 0;
 	int besteffort = 0;
 
-	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item As BE FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND (0 + ",DRIVE_TABLENAME, casenum, casenum);
+	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item As BE FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND (0 ",DRIVE_TABLENAME, casenum, casenum);
 	
 
 	if(GLOBAL_DELTA_ACCESS == 1)
