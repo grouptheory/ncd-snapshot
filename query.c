@@ -97,7 +97,7 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	
 	if(GLOBAL_BESTMATCHING > 0) besteffort = GLOBAL_BESTMATCHING;
 	
-	snprintf(second_sqlbuffer,BIGBUFFER," ) >= %d ", GLOBAL_BESTMATCHING);
+	snprintf(second_sqlbuffer,BIGBUFFER," ) >= %d ", besteffort);
 	strncat(sqlbuffer, second_sqlbuffer, BIGBUFFER);
 	
 	if(GLOBAL_COMPARE == 1)
