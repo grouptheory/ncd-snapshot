@@ -128,9 +128,9 @@ AND S.F2 = A2.F1;"
 
 #define CREATE_COLLABORATION_RESULT "\
 CREATE VIEW Collabrative_Result AS \
-select IMG1, IMG2, SUM(AnomalySUM) \
+select DISTINCT IMG1, IMG2, SUM(AnomalySUM) \
 FROM Collabrative_Start \
-WHERE NCD < (SELECT cutoff FROM Collabrative_Config LIMIT 1) \
+WHERE IMG1 != IMG2 AND NCD < (SELECT cutoff FROM Collabrative_Config LIMIT 1) \
 GROUP BY IMG1,IMG2;"
 
 #ifndef DEFAULT_USER
