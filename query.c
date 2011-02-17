@@ -66,8 +66,21 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	short int spot;	
 	unsigned long long counter = 0;
 	int besteffort = 0;
-
-	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item FROM %s AS a JOIN image_snapshot_table AS b JOIN image_list_table As i where a.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND b.image IN (select image FROM image_list_table WHERE image_casenumber = %d ) AND NOT a.file_type = 'd' AND NOT b.file_type = 'd' AND (0 ",DRIVE_TABLENAME, casenum, casenum);
+	printf("Building views\n");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW IF EXISTS images_for_case;");
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);
+	snprintf(sqlbuffer, BIGBUFFER,"CREATE VIEW images_for_case AS select image FROM image_list_table WHERE image_casenumber = %d;", casenum);
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW IF EXISTS items_for_case;");
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);
+	snprintf(sqlbuffer, BIGBUFFER,"CREATE VIEW items_for_case AS select item FROM image_snapshot_table WHERE (NOT file_type = 'd') AND (image IN (SELECT image FROM images_for_case));");
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);
+	printf("Building query\n");
+	snprintf(sqlbuffer, BIGBUFFER,"select DISTINCT a.item, b.item FROM items_for_case AS a JOIN items_for_case AS b ON  (0 ");
 	
 
 	if(GLOBAL_DELTA_ACCESS == 1)
@@ -109,7 +122,7 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	 
 	fprintf(stderr,"Creating new query and inserting it into the NCD Table.\n");
    // if(GLOBAL_VERBOSE) printf("Verbose Output:%s\n",sqlbuffer);
-	//printf("Query %s\n",sqlbuffer);	    
+	//fprintf(stderr,"Query %s\n",sqlbuffer);	    
 
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
@@ -122,7 +135,7 @@ void createtable(MYSQL *connread, MYSQL *connwrite, int querynum, int casenum, i
 	    counter++;
 	    if (mysql_query(connwrite,second_sqlbuffer) != 0)
 		mysql_print_error(connwrite);
-	//printf("Query %s\n",second_sqlbuffer);	    
+	    //printf("Query %s\n",second_sqlbuffer);	    
 	    if(!GLOBAL_VERBOSE) 
 	    {
 	      printf("%c\b", cursor[spot]); 

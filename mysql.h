@@ -89,7 +89,7 @@ FROM NCD_table AS n \
 JOIN NCD_result AS r \
 JOIN image_snapshot_table AS a \
 JOIN image_snapshot_table AS b \
-WHERE n.ncd_key = r.ncd_key \
+ON n.ncd_key = r.ncd_key \
 AND n.file_one = a.item AND n.file_two = b.item \
 AND n.querynumber = (select query FROM AnomalyConfig) \
 AND ncd_normal <= (select cutoff FROM AnomalyConfig) \
@@ -104,7 +104,7 @@ CREATE VIEW AnomalyJoin AS \
 SELECT A.IMG1, A.F1, C.anomaly \
 FROM Anomaly_Number_Collabrators AS A \
 JOIN AnomalyCurve AS C \
-WHERE A.NUM = C.number;"
+ON A.NUM = C.number;"
 
 #define CREATE_Anomaly_Sum_of_Anomaly_Levels "\
 CREATE VIEW Anomaly_Sum_of_Anomaly_Levels AS \
@@ -121,7 +121,7 @@ select S.IMG1 AS IMG1, S.F1 AS F1, A1.anomaly AS A1, S.IMG2 AS IMG2 , S.F2 AS F2
 FROM AnomalyQueryStart AS S \
 JOIN AnomalyJoin AS A1 \
 JOIN AnomalyJoin AS A2 \
-WHERE S.IMG1 = A1.IMG1 \
+ON S.IMG1 = A1.IMG1 \
 AND S.F1 = A1.F1 \
 AND S.IMG2 = A2.IMG1 \
 AND S.F2 = A2.F1;"

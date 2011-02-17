@@ -263,7 +263,7 @@ void ncdsnapshot(MYSQL *connread, MYSQL *connwrite, int query_num, int chunk, ss
 	short int spot;	
 	int commitcount = 0;
 
-	snprintf(sqlbuffer, BIGBUFFER,"select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n where n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d",query_num);
+	snprintf(sqlbuffer, BIGBUFFER,"select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d",query_num);
 
 	fprintf(stderr,"Removing any previous NCD values related to query [%d].\n", query_num);
 	if (mysql_query(connread,sqlbuffer) != 0)
