@@ -352,7 +352,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 	for(c = 0; c < thread_count; c++)
 	{
 		pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
-		printf("Starting thread[%d] %d of %d to compute NCD Values\n", thread_storage[c].TID, c, thread_count);
+		printf("Starting thread[%lu] %ld of %ld to compute NCD Values\n", thread_storage[c].TID, c, thread_count);
 	}	
 	
 	//Wait for Threads to finish
@@ -391,9 +391,9 @@ void * ncdThread(void *parm)
 	connwrite = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(connwrite == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
 	
-	snprintf(sqlbuffer, BIGBUFFER,"	select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.ncd_key >= %d AND n.ncd_key <= %d;", data->min, data->max);
+	snprintf(sqlbuffer, BIGBUFFER,"	select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.ncd_key >= %ld AND n.ncd_key <= %ld;", data->min, data->max);
 
-	fprintf(stderr,"Thread[%d]: Compiting NCD values for Key %d to %d.\n", data->TID, data->min, data->max);
+	fprintf(stderr,"Thread[%lu]: Computing NCD values for Key %ld to %ld.\n", data->TID, data->min, data->max);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
