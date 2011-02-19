@@ -348,7 +348,6 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		
 		thread_storage[c].min = start;
 		thread_storage[c].max = end;
-
 	}
 	//Fill in min/max
 	
