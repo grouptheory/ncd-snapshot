@@ -384,7 +384,8 @@ void * ncdThread(void *parm)
 	MYSQL_ROW row;
 	float ncd = 0;
 	float dncd = 0;
-	fprintf(stderr,"host_name %s,user_name %s ,password %s ,db_name %s , port_num %d , socket_name %s\n", host_name,user_name,password,db_name, port_num, socket_name)
+	fprintf(stderr,"host_name %s,user_name %s ,password %s ,db_name %s , port_num %d , socket_name %s\n", host_name,user_name,password,db_name, port_num, socket_name);
+	
 	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(connread == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
 	connwrite = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
