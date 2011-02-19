@@ -262,38 +262,18 @@ void ncdsnapshot(MYSQL *connread, MYSQL *connwrite, int query_num, int chunk, ss
 	float dncd = 0;
 	short int spot;	
 	int commitcount = 0;
-
-	snprintf(sqlbuffer, BIGBUFFER,"select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d",query_num);
+	snprintf(sqlbuffer, BIGBUFFER,"DELETE QUICK IGNORE FROM NCD_result USING NCD_result, NCD_table WHERE (NCD_result.ncd_key = NCD_table.ncd_key) AND (NCD_table.querynumber = %d);",query_num);
 
 	fprintf(stderr,"Removing any previous NCD values related to query [%d].\n", query_num);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
-	while( (row = mysql_fetch_row(res)) != NULL)
-	{
-	    snprintf(second_sqlbuffer, BIGBUFFER, "DELETE FROM %s WHERE ncd_key = %s;", NCD_RESULT_TABLENAME, row[0]);
-	    if (mysql_query(connwrite,second_sqlbuffer) != 0)
-			mysql_print_error(connwrite);		
-		commitcount++;
-		if (commitcount >= 10000) 
-		{
-			if (mysql_query(connwrite,"COMMIT;") != 0)
-			mysql_print_error(connwrite);
-			commitcount = 0;
-		}
-
-	    if(!GLOBAL_VERBOSE) 
-	    {
-	      printf("%c\b", cursor[spot]); 
-	      fflush(stdout);
-	      spot = (spot+1) % 4;
-	    }
-	}
-	//Finish Up
+	while( (row = mysql_fetch_row(res)) != NULL);
 	printf("Running a COMMIT\n");
 	if (mysql_query(connwrite,"COMMIT;") != 0)
 		mysql_print_error(connwrite);
 	
+	snprintf(sqlbuffer, BIGBUFFER,"select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d",query_num);
 	
 	
 	fprintf(stderr,"Inserting NCD Values into NCD result table.\n");
