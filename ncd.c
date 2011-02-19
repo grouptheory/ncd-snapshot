@@ -600,13 +600,8 @@ int main(int argc, char *argv[] )
 {
   
     struct dirDFS *directory;
-    char *host_name = NULL;
-    char *user_name = NULL;
-    char *password = NULL;
 	char cfilename[PATH_MAX+1];
     char tempstring[20];
-    unsigned int port_num = 0;
-    char *socket_name = NULL;
     int input,option_index,key;
     char scandir[PATH_MAX+1];
     FILE *fileoutput = NULL;
