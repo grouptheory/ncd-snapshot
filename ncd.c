@@ -433,8 +433,7 @@ void * ncdThread(void *parm)
 	
 	if (insertcount > 0)
 	{
-		snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
-		strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
+		strncat(second_sqlbuffer, ";", BIGBUFFER);
 		if (mysql_query(connwrite,second_sqlbuffer) != 0)
 		mysql_print_error(connwrite);		
 	}
