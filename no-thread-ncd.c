@@ -9,11 +9,9 @@
 #include <getopt.h>
 #include <zlib.h>
 #include <math.h>
-#include <pthread.h>
-
 #include "mysql.h"
 #define BIGBUFFER 10000
-#define PASS_SIZE 100
+
 #define db_name "SNAPSHOT"
 #define DRIVE_TABLENAME "image_snapshot_table"
 #define IMAGE_LIST_TABLENAME "image_list_table"
@@ -34,7 +32,7 @@
 
 
 void initTables(MYSQL *);
-void ncdsnapshot(MYSQL *, int, int, ssize_t);
+void ncdsnapshot(MYSQL *, MYSQL *, int, int, ssize_t);
 int compressSize(char *, ssize_t *, ssize_t *, ssize_t *, int , int, ssize_t );
 int combineSize(char *, char *, ssize_t *, ssize_t *, ssize_t *, int , int, ssize_t );
 void NCDtwofiles(char *, char *, int , int, ssize_t, float *, float * );
@@ -44,7 +42,6 @@ void printhelp();
 ssize_t getFileSize(char *);
 void showTableQuery(MYSQL *, int, int);
 int pickSerial(MYSQL *);
-void * ncdThread(void *);
 
 //Flags
 int GLOB_INIT_FLAG = 0; //Initialize Tables - Default NO
@@ -59,27 +56,9 @@ int GLOBAL_RANDOMK = 0;
 int GLOBAL_SHOWOUT = 0;
 int GLOBAL_COMPARE = 0;
 int GLOBAL_NEWQUERY = 0;
-int GLOBAL_THREADS = 4;
 int TINY_CHUNK = DEFAULT_TINYCHUNK;
 
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
-
-//MySQL Login Information
-char *host_name = NULL;
-char *user_name = NULL;
-char *password = NULL;
-char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
-unsigned int port_num = 0;
-char *socket_name = NULL;
-	
-	
-struct storage_struct {
-	long int min;
-	long int max;
-	int chunk;
-	ssize_t offset;
-	pthread_t TID; //thread ID
-};
 
 
 
@@ -270,151 +249,77 @@ void NCDtwofilesRand(char *file1, char *file2, int type, int CHUNK, int rotation
 	}
 }//Two File NCD w/ random location
 
-void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
+void ncdsnapshot(MYSQL *connread, MYSQL *connwrite, int query_num, int chunk, ssize_t offset)
 {
 
 	char sqlbuffer[BIGBUFFER+2];
+	char second_sqlbuffer[BIGBUFFER+2];
+	char file_one[PATH_MAX];
+	char file_two[PATH_MAX];
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	long int min, max, total, start, end, modulus;
-	int thread_count = GLOBAL_THREADS;
-	int c;
-	struct storage_struct thread_storage[GLOBAL_THREADS]; //create global container
-	pthread_attr_t attr;
-	//get default attributes 
-	pthread_attr_init(&attr);
-	//Must be set to wait for Threads to finish
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	
-	//Removal
+	float ncd = 0;
+	float dncd = 0;
+	short int spot;	
+	int commitcount = 0;
 	snprintf(sqlbuffer, BIGBUFFER,"DELETE QUICK IGNORE FROM NCD_result USING NCD_result, NCD_table WHERE (NCD_result.ncd_key = NCD_table.ncd_key) AND (NCD_table.querynumber = %d);",query_num);
+
 	fprintf(stderr,"Removing any previous NCD values related to query [%d].\n", query_num);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
-		
-	//Get Information  (min,max,total)
-	snprintf(sqlbuffer, BIGBUFFER,"SELECT MIN(ncd_key), MAX(ncd_key), COUNT(ncd_key) FROM NCD_table WHERE querynumber = %d ;",query_num);
-	fprintf(stderr,"Getting information about query.\n");
+	//res = mysql_use_result(connread);
+	//while( (row = mysql_fetch_row(res)) != NULL);
+	printf("Running a COMMIT\n");
+	if (mysql_query(connwrite,"COMMIT;") != 0)
+		mysql_print_error(connwrite);
+	
+	snprintf(sqlbuffer, BIGBUFFER,"select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d",query_num);
+	
+	
+	fprintf(stderr,"Inserting NCD Values into NCD result table.\n");
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
-	if( (row = mysql_fetch_row(res)) == NULL ) { fprintf(stderr,"Error getting data.\n"); exit(1); }
-	else
+	while( (row = mysql_fetch_row(res)) != NULL)
 	{
-		min = atol(row[0]);
-		max = atol(row[1]);
-		total = atol(row[2]);
-	}
-	if(total == 0) { fprintf(stderr,"Nothing to compute NCD on!\n"); exit(1); }
-	
-	//Create Threat Structures
-	for(c = 0; c < GLOBAL_THREADS; c++)
-	{
-		//Fill in the blanks
-		thread_storage[c].chunk = chunk;
-		thread_storage[c].offset = offset;
-		
-	} //Fill in the blanks
-	
-	//Fill in Min/Max
-	for(c = 0; c < thread_count; c++)
-	{
-		if(c == 0) { 
-			modulus = total / GLOBAL_THREADS; 
-			if(modulus == 0)
-			{
-				//More threats then total number? Ouch - only open one thread
-				thread_storage[c].min = min;
-				thread_storage[c].max = max;
-				thread_count = 1;
-				break;
-			}
-			start = min;
-			end = min + modulus - 1;
-		} //c== 0
-		else if( c == (GLOBAL_THREADS -1) )
+		//strncpy(file_one, row[1], PATH_MAX);
+		//strncpy(file_two, row[2], PATH_MAX);
+		ncd = 0; dncd =0;
+		if(GLOBAL_RANDOM == 0)
+			NCDtwofiles(row[1], row[2], Z_DEFAULT_COMPRESSION, chunk, offset, &ncd, &dncd);
+		else 
+			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, chunk, GLOBAL_RANDOMK, &ncd, &dncd);
+	    if (ncd == -999) continue; //skip if we had an error
+	    snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\");", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
+		//printf("Test: 1:%s 2:%s strlen %d Full %s\n", row[1], row[2], strlen(row[2]), second_sqlbuffer);
+    if (mysql_query(connwrite,second_sqlbuffer) != 0)
+			mysql_print_error(connwrite);		
+				commitcount++;
+		if (commitcount >= 10000) 
 		{
-			start = end + 1;
-			end = max;
+			if (mysql_query(connwrite,"COMMIT;") != 0)
+			mysql_print_error(connwrite);
+			commitcount = 0;
+			sync();
 		}
-		else
-		{
-			start = end + 1;
-			end = min + modulus -1;
-		}
-		thread_storage[c].min = start;
-		thread_storage[c].max = end;
-	}
-	//Fill in min/max
-	
-	//Start Threads
-	for(c = 0; c < thread_count; c++)
-	{
-		printf("Starting thread[%d of %d] to compute NCD Values\n", c, thread_count);
-		pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
-	}	
-	
-	//Wait for Threads to finish
-	for (c=0; c < thread_count; c++)
-	{
-		pthread_join(thread_storage[c].TID, NULL);
-	}
-	
+	    if(!GLOBAL_VERBOSE) 
+	    {
+	      printf("%c\b", cursor[spot]); 
+	      fflush(stdout);
+	      spot = (spot+1) % 4;
+	    }
+		//else printf("%s\n",second_sqlbuffer);
+	    
+	 }
 	printf("Running a COMMIT\n");
-	if (mysql_query(connread,"COMMIT;") != 0)
-		mysql_print_error(connread);
+	if (mysql_query(connwrite,"COMMIT;") != 0)
+		mysql_print_error(connwrite);
 
 	 fprintf(stderr,"NCD Values have been added to the NCD Result Table.\n");
 	 
 }//ncdsnapshot
 
-void * ncdThread(void *parm)
-{
-	//creat data structure
-	struct storage_struct *data;
-	//Parm is a void of any structure, form parm into actual data structure 
-	data = (struct storage_struct *)parm;
-	char sqlbuffer[BIGBUFFER+2];
-	char second_sqlbuffer[BIGBUFFER+2];
-	char file_one[PATH_MAX];
-	char file_two[PATH_MAX];
-	MYSQL *connread = NULL;
-	MYSQL *connwrite = NULL;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	float ncd = 0;
-	float dncd = 0;
-	
-	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
-	if(connread == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
-	connwrite = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
-	if(connwrite == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
-	
-	snprintf(sqlbuffer, BIGBUFFER,"	select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.ncd_key >= %d AND n.ncd_key <= %d;", data->min, data->max);
 
-	fprintf(stderr,"Inserting NCD Values into NCD result table.\n");
-	if (mysql_query(connread,sqlbuffer) != 0)
-		mysql_print_error(connread);
-	res = mysql_use_result(connread);
-	
-	while( (row = mysql_fetch_row(res)) != NULL)
-	{
-		ncd = 0; dncd =0;
-		if(GLOBAL_RANDOM == 0)
-			NCDtwofiles(row[1], row[2], Z_DEFAULT_COMPRESSION, data->chunk, data->offset, &ncd, &dncd);
-		else 
-			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
-	    if (ncd == -999) continue; //skip if we had an error
-	    snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\");", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
-		if (mysql_query(connwrite,second_sqlbuffer) != 0)
-			mysql_print_error(connwrite);		
-	 }
-	
-	mysql_close(connread);
-	mysql_close(connwrite);
-	
-	return((void *)0); //returns pointer NULL of no datatype
-}//end of ncdThread
 
 void showTableQuery(MYSQL *connread, int query_num, int limit_value)
 {
@@ -594,7 +499,7 @@ void printhelp()
     printf("\t-h, --help\t This help page.\n");
   
 }
-
+#define PASS_SIZE 100
 int main(int argc, char *argv[] )
 {
   
@@ -604,6 +509,7 @@ int main(int argc, char *argv[] )
     char *password = NULL;
 	char cfilename[PATH_MAX+1];
     char tempstring[20];
+    char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
     unsigned int port_num = 0;
     char *socket_name = NULL;
     int input,option_index,key;
@@ -635,71 +541,71 @@ int main(int argc, char *argv[] )
     {
       switch(input)
       {
-			case 'h' :
-			    printhelp();
-			    exit(1);
-			  break;
-			case 'H' :
-			  host_name = optarg;
-			  break;
-			case 'u' :
-			  user_name = optarg;
-			  break;
-			case 'Q' :
-			  query_number = optarg;
-			  break;
-			case 'q' :
-			  GLOBAL_NEWQUERY = 1;
-			  break;	  
-			case 'p' :
-			  snprintf(passbuffer,PASS_SIZE,"%s\0",optarg);
-			  password = passbuffer; // no more NULL
-			  //Neat trick from MySQL C API Book - Online to hide password from PS
-			  while (*optarg) *optarg++ = ' ';
-			  break;	
-			case 'P' :
-			  port_num = (unsigned int) atoi(optarg);
-			  break;
-			case 'S' :
-			  socket_name = optarg;  
-			  break;
-			case 'D' :
-			  GLOBAL_DOUBLE = 1;
-			  break;	  
-			case 'c' :
-			  strncpy(tempstring,optarg,19);
-			  chunk = atoi(tempstring);
-			  if(chunk < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			break;
-			case 'O' :
-			  strncpy(tempstring,optarg,19);
-			  offset = atoi(tempstring);
-			  if(offset < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
-			break;
-			case 'o' :
-			  GLOBAL_RANDOM = 1;
-			break;
-			case 'w' :
-			  GLOBAL_SHOWOUT = 1;
-			break;
-			case 'l' :
-			  strncpy(tempstring,optarg,19);
-			 limit_value = atoi(tempstring);
-			  if(limit_value < 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
-			break;
-			case 'T' :
-				strncpy(tempstring,optarg,19);
-				TINY_CHUNK = atoi(tempstring);
-				if(TINY_CHUNK < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
-			break;
-			case 'k' :
-			  strncpy(tempstring,optarg,19);
-			  GLOBAL_RANDOMK = atoi(tempstring);
-			  if(krepeat < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			  GLOBAL_RANDOMK = krepeat;
-			break;
-				  
-		}//switch      
+	case 'h' :
+	    printhelp();
+	    exit(1);
+	  break;
+	case 'H' :
+	  host_name = optarg;
+	  break;
+	case 'u' :
+	  user_name = optarg;
+	  break;
+	case 'Q' :
+	  query_number = optarg;
+	  break;
+	case 'q' :
+	  GLOBAL_NEWQUERY = 1;
+	  break;	  
+	case 'p' :
+	  snprintf(passbuffer,PASS_SIZE,"%s\0",optarg);
+	  password = passbuffer; // no more NULL
+	  //Neat trick from MySQL C API Book - Online to hide password from PS
+	  while (*optarg) *optarg++ = ' ';
+	  break;	
+	case 'P' :
+	  port_num = (unsigned int) atoi(optarg);
+	  break;
+	case 'S' :
+	  socket_name = optarg;  
+	  break;
+	case 'D' :
+	  GLOBAL_DOUBLE = 1;
+	  break;	  
+	case 'c' :
+	  strncpy(tempstring,optarg,19);
+	  chunk = atoi(tempstring);
+	  if(chunk < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+	break;
+	case 'O' :
+	  strncpy(tempstring,optarg,19);
+	  offset = atoi(tempstring);
+	  if(offset < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
+	break;
+	case 'o' :
+	  GLOBAL_RANDOM = 1;
+	break;
+	case 'w' :
+	  GLOBAL_SHOWOUT = 1;
+	break;
+	case 'l' :
+	  strncpy(tempstring,optarg,19);
+	 limit_value = atoi(tempstring);
+	  if(limit_value < 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
+	break;
+	case 'T' :
+		strncpy(tempstring,optarg,19);
+		TINY_CHUNK = atoi(tempstring);
+		if(TINY_CHUNK < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
+	break;
+	case 'k' :
+	  strncpy(tempstring,optarg,19);
+	  GLOBAL_RANDOMK = atoi(tempstring);
+	  if(krepeat < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+	  GLOBAL_RANDOMK = krepeat;
+	break;
+		  
+      }//switch      
      
     }//while
     
@@ -710,19 +616,23 @@ int main(int argc, char *argv[] )
 	if(user_name == NULL) user_name = DEFAULT_USER;
     
 	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
-
+	connwrite = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	query_num = pickQuery(connread, query_number);
-
 	if(query_num > 0)
 	{
-		ncdsnapshot(connread, query_num, chunk, offset);
+		ncdsnapshot(connread, connwrite, query_num, chunk, offset);
 		if(GLOBAL_SHOWOUT == 1)
 		{
 			showTableQuery(connread, query_num, limit_value);
 		}
 	}
 
+	//Sql End
+	if (mysql_query(connwrite,"COMMIT;") != 0)
+		mysql_print_error(connwrite);
 	mysql_close(connread);
+	mysql_close(connwrite);
+
     
     return(0);
 }
