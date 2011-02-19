@@ -352,7 +352,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 	for(c = 0; c < thread_count; c++)
 	{
 		pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
-		printf("Starting thread[%lu] %ld of %ld to compute NCD Values\n", thread_storage[c].TID, c, thread_count);
+		printf("Starting thread[%lu] %ld of %ld to compute NCD Values\n", thread_storage[c].TID, c+1, thread_count);
 	}	
 	
 	//Wait for Threads to finish
