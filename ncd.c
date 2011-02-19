@@ -412,7 +412,7 @@ void * ncdThread(void *parm)
 			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
 	    if (ncd == -999) continue; //skip if we had an error
 		
-		if(insertcount == 0) snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
+		if(insertcount == 0) { snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd); insertcount++;}
 		else if (insertcount >= 100)
 		{
 			snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
