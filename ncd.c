@@ -317,8 +317,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		
 	} //Fill in the blanks
 	
-	printf("Min %ld Max %ld Total %ld\n", min,max,total);
-	
+
 	//Fill in Min/Max
 	for(c = 0; c < GLOBAL_THREADS; c++)
 	{
@@ -349,7 +348,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		
 		thread_storage[c].min = start;
 		thread_storage[c].max = end;
-		printf("c %d modulus %ld start %ld end %ld\n", c, modulus, start, end);
+
 	}
 	//Fill in min/max
 	
@@ -398,7 +397,6 @@ void * ncdThread(void *parm)
 	
 	snprintf(sqlbuffer, BIGBUFFER,"	select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.ncd_key >= %ld AND n.ncd_key <= %ld;", data->min, data->max);
 
-	fprintf(stderr,"Thread[%lu]: Computing NCD values for Key %ld to %ld.\n", data->TID, data->min, data->max);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
@@ -569,6 +567,7 @@ struct option long_options[] =
   {"limit",  required_argument, NULL, 'l'},
   {"double", no_argument, NULL, 'D'},
   {"tinychunk", required_argument, NULL, 'T'},
+  {"threads", required_argument, NULL, 'A'},
   { 0, 0, 0, 0 }
 }; //long options
 
@@ -588,6 +587,7 @@ void printhelp()
 	printf("\t-q, --query\t	Use the last query created.\n");
     printf("\t-w, --show\t Show NCD Table when completed\n");
     printf("\t-l, --limit\t Limit the output of the show command.\n");
+	printf("\t-A, --threads\t Change number of threAds to use.\n");
     printf("\t\t\t NCD Options\n");
     printf("\t-c, --chunk\t The value of bytes that we check,\n\t\t\t Default is currently set to: %d\n",DEFAULT_CHUNK);
     printf("\t-o, --random\t Use a random offset to compare.\n");
@@ -632,7 +632,7 @@ int main(int argc, char *argv[] )
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -671,6 +671,11 @@ int main(int argc, char *argv[] )
 			  strncpy(tempstring,optarg,19);
 			  chunk = atoi(tempstring);
 			  if(chunk < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+			break;
+			case 'A' :
+			  strncpy(tempstring,optarg,19);
+			  GLOBAL_THREADS = atoi(tempstring);
+			  if(GLOBAL_THREADS < 1) { fprintf(stdout,"You need at least 1 thread! Setting to default.\n"); GLOBAL_THREADS = 4; }
 			break;
 			case 'O' :
 			  strncpy(tempstring,optarg,19);
