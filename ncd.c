@@ -306,6 +306,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		total = atol(row[2]);
 	}
 	if(total == 0) { fprintf(stderr,"Nothing to compute NCD on!\n"); exit(1); }
+	while( (row = mysql_fetch_row(res)) != NULL);
 	
 	//Create Threat Structures
 	for(c = 0; c < GLOBAL_THREADS; c++)
@@ -350,8 +351,8 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 	//Start Threads
 	for(c = 0; c < thread_count; c++)
 	{
-		printf("Starting thread[%d of %d] to compute NCD Values\n", c, thread_count);
 		pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
+		printf("Starting thread[%d] %d of %d to compute NCD Values\n", thread_storage[c].TID, c, thread_count);
 	}	
 	
 	//Wait for Threads to finish
@@ -384,7 +385,6 @@ void * ncdThread(void *parm)
 	MYSQL_ROW row;
 	float ncd = 0;
 	float dncd = 0;
-	fprintf(stderr,"host_name %s,user_name %s ,password %s ,db_name %s , port_num %d , socket_name %s\n", host_name,user_name,password,db_name, port_num, socket_name);
 	
 	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(connread == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
@@ -393,7 +393,7 @@ void * ncdThread(void *parm)
 	
 	snprintf(sqlbuffer, BIGBUFFER,"	select n.ncd_key, CONCAT(a.directory,'/', a.filename), CONCAT(b.directory, '/', b.filename) FROM image_snapshot_table AS a JOIN image_snapshot_table AS b JOIN NCD_table AS n ON n.file_one = a.item AND n.file_two = b.item AND n.ncd_key >= %d AND n.ncd_key <= %d;", data->min, data->max);
 
-	fprintf(stderr,"Inserting NCD Values into NCD result table.\n");
+	fprintf(stderr,"Thread[%d]: Compiting NCD values for Key %d to %d.\n", data->TID, data->min, data->max);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
