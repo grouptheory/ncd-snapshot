@@ -380,6 +380,7 @@ void * ncdThread(void *parm)
 	data = (struct storage_struct *)parm;
 	char sqlbuffer[BIGBUFFER+2];
 	char second_sqlbuffer[BIGBUFFER+2];
+	char third_sqlbuffer[BIGBUFFER];
 	char file_one[PATH_MAX];
 	char file_two[PATH_MAX];
 	MYSQL *connread = NULL;
@@ -388,6 +389,7 @@ void * ncdThread(void *parm)
 	MYSQL_ROW row;
 	float ncd = 0;
 	float dncd = 0;
+	int insertcount = 0;
 	
 	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(connread == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
@@ -400,6 +402,7 @@ void * ncdThread(void *parm)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
 	
+
 	while( (row = mysql_fetch_row(res)) != NULL)
 	{
 		ncd = 0; dncd =0;
@@ -408,10 +411,33 @@ void * ncdThread(void *parm)
 		else 
 			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
 	    if (ncd == -999) continue; //skip if we had an error
-	    snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\");", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
-		if (mysql_query(connwrite,second_sqlbuffer) != 0)
-			mysql_print_error(connwrite);		
+		
+		if(insertcount == 0) snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
+		else if (insertcount >= 100)
+		{
+			snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
+			strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
+			if (mysql_query(connwrite,second_sqlbuffer) != 0)
+			mysql_print_error(connwrite);	
+			insertcount = 0;
+		
+		}
+		else
+		{
+			snprintf(third_sqlbuffer, BIGBUFFER, ", (\"%s\", \"%f\", \"%f\") ", row[0], ncd, dncd);
+			strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
+			insertcount++;
+		}
+	
 	 }
+	
+	if (insertcount > 0)
+	{
+		snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
+		strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
+		if (mysql_query(connwrite,second_sqlbuffer) != 0)
+		mysql_print_error(connwrite);		
+	}
 	
 	mysql_close(connread);
 	mysql_close(connwrite);
