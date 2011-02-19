@@ -317,10 +317,13 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		
 	} //Fill in the blanks
 	
+	printf("Min %ld Max %ld Total %ld\n", min,max,total);
+	
 	//Fill in Min/Max
-	for(c = 0; c < thread_count; c++)
+	for(c = 0; c < GLOBAL_THREADS; c++)
 	{
-		if(c == 0) { 
+		if(c == 0) 
+		{ 
 			modulus = total / GLOBAL_THREADS; 
 			if(modulus == 0)
 			{
@@ -333,7 +336,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 			start = min;
 			end = min + modulus - 1;
 		} //c== 0
-		else if( c == (GLOBAL_THREADS -1) )
+		else if ( c == (GLOBAL_THREADS -1) )
 		{
 			start = end + 1;
 			end = max;
@@ -343,8 +346,10 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 			start = end + 1;
 			end = min + modulus -1;
 		}
+		
 		thread_storage[c].min = start;
 		thread_storage[c].max = end;
+		printf("c %d modulus %ld start %ld end %ld\n", c, modulus, start, end);
 	}
 	//Fill in min/max
 	
