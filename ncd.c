@@ -344,7 +344,7 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 		else
 		{
 			start = end + 1;
-			end = min + modulus -1;
+			end = start + modulus -1;
 		}
 		
 		thread_storage[c].min = start;
