@@ -267,8 +267,8 @@ void ncdsnapshot(MYSQL *connread, MYSQL *connwrite, int query_num, int chunk, ss
 	fprintf(stderr,"Removing any previous NCD values related to query [%d].\n", query_num);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
-	res = mysql_use_result(connread);
-	while( (row = mysql_fetch_row(res)) != NULL);
+	//res = mysql_use_result(connread);
+	//while( (row = mysql_fetch_row(res)) != NULL);
 	printf("Running a COMMIT\n");
 	if (mysql_query(connwrite,"COMMIT;") != 0)
 		mysql_print_error(connwrite);
