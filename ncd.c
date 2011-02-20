@@ -402,7 +402,19 @@ void * ncdThread(void *parm)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
 	
-
+	while( (row = mysql_fetch_row(res)) != NULL)
+	{
+		ncd = 0; dncd =0;
+		if(GLOBAL_RANDOM == 0)
+			NCDtwofiles(row[1], row[2], Z_DEFAULT_COMPRESSION, data->chunk, data->offset, &ncd, &dncd);
+		else 
+			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
+	    if (ncd == -999) continue; //skip if we had an error
+	    snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\");", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
+		if (mysql_query(connwrite,second_sqlbuffer) != 0)
+			mysql_print_error(connwrite);		
+	 }
+	 /*
 	while( (row = mysql_fetch_row(res)) != NULL)
 	{
 		ncd = 0; dncd =0;
@@ -437,7 +449,7 @@ void * ncdThread(void *parm)
 		if (mysql_query(connwrite,second_sqlbuffer) != 0)
 		mysql_print_error(connwrite);		
 	}
-	
+	*/
 	mysql_close(connread);
 	mysql_close(connwrite);
 	
