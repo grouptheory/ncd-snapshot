@@ -1,18 +1,18 @@
 #!/bin/bash
-TOTAL=1000
+TOTAL=1
 NAME="duration"
 DIR="/home/ralcalde/Code/ncd-snapshot/test/"
 TEMPC=0
 USER="snapshot"
 PASS="snapshot"
 CONSPIRACY=4
+SEED=$(cat SEED)
 
-rm -rf duration* person* SEED* 
+rm -rf duration* person*
 #Start first part of creation
-./company -c -d 0 -C $CONSPIRACY
+./company -c -s $SEED -d 0 -C $CONSPIRACY
 mkdir ${NAME}0
 cp -R person* ${NAME}0
-SEED=$(cat SEED)
 
 #intialize
 ../snapshot -u $USER -p $PASS -I
@@ -24,7 +24,7 @@ echo Our seed $SEED
 for i in `seq 1 $TOTAL`;
 do
 	echo ${NAME}${i}
-	./company -d 1 -s $SEED -C $CONSPIRACY
+	./company -d 1 -s $SEED -C $CONSPIRACY -R -S SEEDS-RUN-NUMBER-${i}
 	mkdir ${NAME}${i}
 	cp -R person* ${NAME}${i}
 	cd ${NAME}${i}
@@ -41,9 +41,9 @@ do
 		fi
 	done
 	cd ..
-	time ../query  -u $USER -p $PASS -K $i -q
-	time ../ncd -u $USER -p $PASS -c 32000 -q
-	cp SEEDS SEEDS-RUN-NUMBER-${i}
+	../query  -u $USER -p $PASS -K $i -q
+	../ncd -u $USER -p $PASS -c 32000 -q
+
 done
 
 
