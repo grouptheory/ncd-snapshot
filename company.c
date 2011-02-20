@@ -391,7 +391,7 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	
 	if ( (lseek(fd, startoff, SEEK_SET)) == -1 ) {printf("Error seeking to random offset %d on %s.",startoff, filename); return -1; }	
 	
-	randomString(filebuffer, modsize, 1, 0);
+	randomString(filebuffer, modsize, 2, 0);
 	
 	if( (write(fd, filebuffer, modsize)) != modsize) {fprintf(stderr,"Error writting to output file %s.\n",filename); }	
 	close(fd);
