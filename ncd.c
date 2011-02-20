@@ -426,9 +426,9 @@ void * ncdThread(void *parm)
 	    if (ncd == -999) continue; //skip if we had an error
 		
 		if(insertcount == 0) { snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd); insertcount++;}
-		else if (insertcount >= 10)
+		else if (insertcount > 100)
 		{
-			snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
+			snprintf(third_sqlbuffer, BIGBUFFER, ", (\"%s\", \"%f\", \"%f\");", row[0], ncd, dncd);
 			strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
 			if (mysql_query(connwrite,second_sqlbuffer) != 0)
 			mysql_print_error(connwrite);	
