@@ -60,6 +60,7 @@ int GLOBAL_SHOWOUT = 0;
 int GLOBAL_COMPARE = 0;
 int GLOBAL_NEWQUERY = 0;
 int GLOBAL_THREADS = 4;
+int GLOBAL_SKIPDEL = 0;
 int TINY_CHUNK = DEFAULT_TINYCHUNK;
 
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
@@ -287,11 +288,14 @@ void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	
 	//Removal
+	if(GLOBAL_SKIPDEL == 0)
+	{
 	snprintf(sqlbuffer, BIGBUFFER,"DELETE QUICK IGNORE FROM NCD_result USING NCD_result, NCD_table WHERE (NCD_result.ncd_key = NCD_table.ncd_key) AND (NCD_table.querynumber = %d);",query_num);
 	fprintf(stderr,"Removing any previous NCD values related to query [%d].\n", query_num);
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
-		
+	}
+	
 	//Get Information  (min,max,total)
 	snprintf(sqlbuffer, BIGBUFFER,"SELECT MIN(ncd_key), MAX(ncd_key), COUNT(ncd_key) FROM NCD_table WHERE querynumber = %d ;",query_num);
 	fprintf(stderr,"Getting information about query.\n");
@@ -605,6 +609,7 @@ struct option long_options[] =
   {"double", no_argument, NULL, 'D'},
   {"tinychunk", required_argument, NULL, 'T'},
   {"threads", required_argument, NULL, 'A'},
+  {"nodelete", no_argument, NULL, 'N'},
   { 0, 0, 0, 0 }
 }; //long options
 
@@ -625,7 +630,8 @@ void printhelp()
     printf("\t-w, --show\t Show NCD Table when completed\n");
     printf("\t-l, --limit\t Limit the output of the show command.\n");
 	printf("\t-A, --threads\t Change number of threAds to use.\n");
-    printf("\t\t\t NCD Options\n");
+    printf("\t-N, --nodelete\t Skips the removal of previous NCD Values.\n");
+	printf("\t\t\t NCD Options\n");
     printf("\t-c, --chunk\t The value of bytes that we check,\n\t\t\t Default is currently set to: %d\n",DEFAULT_CHUNK);
     printf("\t-o, --random\t Use a random offset to compare.\n");
     printf("\t-k, --repeat\t Optional argument to be used with --random option.\n\t\t\t Repeats operation K times. EX: -k 2.\n");
@@ -669,7 +675,7 @@ int main(int argc, char *argv[] )
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:N", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -703,7 +709,10 @@ int main(int argc, char *argv[] )
 			  break;
 			case 'D' :
 			  GLOBAL_DOUBLE = 1;
-			  break;	  
+			  break;
+			case 'N' :
+			  GLOBAL_SKIPDEL = 1;
+			  break;			  
 			case 'c' :
 			  strncpy(tempstring,optarg,19);
 			  chunk = atoi(tempstring);
