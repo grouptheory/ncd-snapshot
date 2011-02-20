@@ -402,7 +402,7 @@ void * ncdThread(void *parm)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
 	
-	while( (row = mysql_fetch_row(res)) != NULL)
+	/*while( (row = mysql_fetch_row(res)) != NULL)
 	{
 		ncd = 0; dncd =0;
 		if(GLOBAL_RANDOM == 0)
@@ -414,7 +414,8 @@ void * ncdThread(void *parm)
 		if (mysql_query(connwrite,second_sqlbuffer) != 0)
 			mysql_print_error(connwrite);		
 	 }
-	 /*
+	 */
+	 
 	while( (row = mysql_fetch_row(res)) != NULL)
 	{
 		ncd = 0; dncd =0;
@@ -425,7 +426,7 @@ void * ncdThread(void *parm)
 	    if (ncd == -999) continue; //skip if we had an error
 		
 		if(insertcount == 0) { snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd); insertcount++;}
-		else if (insertcount >= 100)
+		else if (insertcount >= 10)
 		{
 			snprintf(third_sqlbuffer, BIGBUFFER, ";", row[0], ncd, dncd);
 			strncat(second_sqlbuffer, third_sqlbuffer, BIGBUFFER);
@@ -449,7 +450,7 @@ void * ncdThread(void *parm)
 		if (mysql_query(connwrite,second_sqlbuffer) != 0)
 		mysql_print_error(connwrite);		
 	}
-	*/
+	
 	mysql_close(connread);
 	mysql_close(connwrite);
 	
