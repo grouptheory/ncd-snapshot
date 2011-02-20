@@ -10,6 +10,7 @@ Change Modify Offset to use randomString function - changed upper/lower bound to
 	This still leaves open the option to have a randomly sized modification
 Added a command line option for Consipiracy Size Group
 	
+2/19 - Changes to Random - All 0 or all 1's
 
 */
 
@@ -168,6 +169,17 @@ int randomString( char *rstring, int size, int upper, int lower)
 	for(count = 0; count < size; count++)
     {
         rstring[count] = (char)((rand() % (upper-lower)) + lower);
+    }
+	return count;
+}
+
+int randomStringSimple( char *rstring, int size, int upper, int lower)
+{
+	int count;
+	char byte = (char)((rand() % (upper-lower)) + lower);
+	for(count = 0; count < size; count++)
+    {
+        rstring[count] = byte;
     }
 	return count;
 }
@@ -391,7 +403,7 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	
 	if ( (lseek(fd, startoff, SEEK_SET)) == -1 ) {printf("Error seeking to random offset %d on %s.",startoff, filename); return -1; }	
 	
-	randomString(filebuffer, modsize, 2, 0);
+	randomStringSimple(filebuffer, modsize, 2, 0);
 	
 	if( (write(fd, filebuffer, modsize)) != modsize) {fprintf(stderr,"Error writting to output file %s.\n",filename); }	
 	close(fd);
