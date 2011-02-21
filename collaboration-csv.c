@@ -8,7 +8,7 @@
 #include <getopt.h>
 #include "mysql.h"
 
-#define ARRAYSIZE_TIME 10
+#define ARRAYSIZE_TIME 3
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
@@ -249,7 +249,7 @@ int main(int argc, char *argv[] )
     conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
     
 	//Setting up main array
-	printf("Setting up Array for %d Image and %d iterations.\n", ARRAYSIZE_IMAGES, ARRAYSIZE_TIME);
+	printf("Setting up Array for %d Images and %d iterations.\n", ARRAYSIZE_IMAGES, ARRAYSIZE_TIME);
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 			for(z=0; z < ARRAYSIZE_TIME; z++)
@@ -269,19 +269,22 @@ int main(int argc, char *argv[] )
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
-			fprintf(outcsv,"%d, %d",x,y);
 			check = 0;
 			for(z=0; z < ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
 				if(array[x][y][z] != 0) check = 1;			
 			}
-			if(check == 1) for(z=0; z < ARRAYSIZE_TIME; z++)
+			if(check == 1) 
 			{
-				//print values
-				fprintf(outcsv,", %f",array[x][y][z]);
+				fprintf(outcsv,"%d, %d",x,y);
+				for(z=0; z < ARRAYSIZE_TIME; z++)
+				{
+					//print values
+					fprintf(outcsv,", %f",array[x][y][z]);
+				}
+				fprintf(outcsv,"\n");
 			}
-			fprintf(outcsv,"\n");
 		}
 	
     //Sql End
