@@ -185,12 +185,9 @@ int randomStringSimple( char *rstring, int size, int upper, int lower)
 }
 
 //================================================
-Group* makeGroup(int i, int gsize, int files, Person** people, int CREATENEW) {
+Group* makeGroup(int i, int gsize, int files, Person** people) {
   int j, k, f, c;
-  int fdin,fdout;
-  char buffer[BLOCK+1];
-  char startfilename[PATH_MAX+1];
-  char newfilename[PATH_MAX+1];
+
   ssize_t readbytes, writebytes, totalbytes;
   printf("*** making group %d\n",i);
   Group* g=(Group*) malloc(sizeof(struct Group));
@@ -213,13 +210,21 @@ Group* makeGroup(int i, int gsize, int files, Person** people, int CREATENEW) {
   printf("the members of group %d are sharing %d files \n",i,files);
 
   g->num_files = files;
-  
-  if(CREATENEW == 1)
-  {
+
+  return g;
+}
+
+void makeFiles(Group* g, int i, int gsize, int files, Person** people) {
+		int j, k, f, c;
+		int fdin,fdout;
+		char buffer[BLOCK+1];
+		char startfilename[PATH_MAX+1];
+		char newfilename[PATH_MAX+1];
+		ssize_t readbytes, writebytes, totalbytes;
 	  //1.  Create Temp File in member 0's folder
 	  //2. Copy Temp file into other user directories
-	  if(g->num_members == 0) { printf("No users to add files to.\n"); return g;}
-	  if(g->num_files == 0) { printf("No files to add.\n"); return g;}
+	  if(g->num_members == 0) { printf("No users to add files to.\n"); exit(1);}
+	  if(g->num_files == 0) { printf("No files to add.\n"); exit(1);}
 	  for (f=0; f<files; f++) 
 		{ 
 			//Make Random File
@@ -251,12 +256,9 @@ Group* makeGroup(int i, int gsize, int files, Person** people, int CREATENEW) {
 				close(fdout);
 			}
 	   } //Create file for loop
-   }
 
-  // To do: initialize other fields as needed
-  return g;
+
 }
-
 //================================================
 void informPeopleOfTheirGroups(Person** people, Group** orgs) {
   int i, j, k, ct;
@@ -598,11 +600,19 @@ int main(int argc, char** argv) {
   // make groups
   orgs = (Group**)malloc(ORGS * sizeof(Group*));
   for (i=0; i<ORGS; i++) {
-    orgs[i]=makeGroup(i, groupsizes[i], groupfiles[i], people, CREATENEW);
+    orgs[i]=makeGroup(i, groupsizes[i], groupfiles[i], people);
   }
   
   // tell a person about the groups they are in
   informPeopleOfTheirGroups(people, orgs);
+  
+  if(CREATENEW)
+  {
+	for (i=0; i<ORGS; i++) 
+		{
+		makeFiles(orgs[i], i, groupsizes[i], groupfiles[i], people);
+		}	
+  }
 
   printf("Seed used to create simulation: %d\n",SEED);
   outputSeed(SEED);
