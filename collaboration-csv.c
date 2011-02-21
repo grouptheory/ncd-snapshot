@@ -106,9 +106,9 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 	
 	while( (row = mysql_fetch_row(res)) != NULL)
 	{
-			image_one = atoi(data[0]);
-			image_one = atoi(data[1]);
-			collaboration_num = atof(data[2]);
+			image_one = atoi(row[0]);
+			image_two = atoi(row[1]);
+			collaboration_num = atof(row[2]);
 			array[image_one][image_two][time] = collaboration_num;
 	}
 	
