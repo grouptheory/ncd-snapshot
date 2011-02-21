@@ -170,7 +170,7 @@ int main(int argc, char *argv[] )
     FILE *fileoutput = NULL;
     MYSQL *conn = NULL;
     int limit_value = 0;
-	int x,y,z;
+	int x,y,z, check;
     char sqlbuffer[BIGBUFFER];
   
     //Setup for MySQL Init File
@@ -257,7 +257,7 @@ int main(int argc, char *argv[] )
 	
 	//Get Data
 	printf("Starting to get data.\n");
-	for(z = 1; z < ARRAYSIZE_TIME; z++)
+	for(z = 1; z <= ARRAYSIZE_TIME; z++)
 	{
 		printf("Getting data for iteration %d of %d.\n",z,ARRAYSIZE_TIME);
 		initTables(conn, z);
@@ -269,8 +269,14 @@ int main(int argc, char *argv[] )
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
-			fprintf(outcsv,"%f, %f",x,y);
-			for(z=0; z < ARRAYSIZE_TIME; z++)
+			fprintf(outcsv,"%d, %d",x,y);
+			check = 0;
+			for(z=0; z < ARRAYSIZE_TIME; z++) 
+			{
+				//Check for anything
+				if(array[x][y][z] != 0) check = 1;			
+			}
+			if(check == 1) for(z=0; z < ARRAYSIZE_TIME; z++)
 			{
 				//print values
 				fprintf(outcsv,", %f",array[x][y][z]);
