@@ -8,7 +8,7 @@
 #include <getopt.h>
 #include "mysql.h"
 
-#define ARRAYSIZE_TIME 3
+#define ARRAYSIZE_TIME 10
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
