@@ -187,7 +187,7 @@ int main(int argc, char *argv[] )
      
 	initTables(conn);
 	if(SHOW_Start == 1) showTable(conn, "Collabrative_Start_Temp", limit_value);
-	showTable(conn, "Collabrative_Result_Temp", limit_value);
+	showTable(conn, "Collaborative_Result_Temp", limit_value);
     //Sql End
     mysql_close(conn);
     
