@@ -60,7 +60,7 @@ void initTables(MYSQL *conn)
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Result_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 	  mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) FROM Collaborative_Start_Temp WHERE IMG1 != IMG2 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) FROM Collaborative_Start_Temp WHERE IMG2 > IMG1 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
 	res = mysql_use_result(conn);
