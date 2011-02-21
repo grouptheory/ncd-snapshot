@@ -36,13 +36,7 @@ int GLOBAL_NEWQUERY = 0;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
 
-#define CREATE_COLLABORATION_START_TEMP "\
-DROP TABLE IF EXISTS Collaborative_Start_Temp; \
-CREATE TEMPORARY TABLE Collaborative_Start_Temp AS \
-SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM \
-FROM AnomalyQueryStart AS S \
-LEFT JOIN AnomalyJoin AS J USING(IMG1, F1)\
-LEFT JOIN AnomalyJoin AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;"
+
 
 
 void initTables(MYSQL *conn)
@@ -52,14 +46,17 @@ void initTables(MYSQL *conn)
 	char sqlbuffer[BIGBUFFER];
 	
 	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Start_Temp");
-	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_COLLABORATION_START_TEMP);
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Start_Temp;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		//mysql_print_error(conn);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Start_Temp AS SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM FROM AnomalyQueryStart AS S LEFT JOIN AnomalyJoin AS J USING(IMG1, F1) LEFT JOIN AnomalyJoin AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 
 	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Result_Temp");
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Result_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
-		mysql_print_error(conn);	
+		//mysql_print_error(conn);	
 	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) FROM Collaborative_Start_Temp WHERE IMG1 != IMG2 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
