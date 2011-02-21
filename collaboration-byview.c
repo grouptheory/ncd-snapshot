@@ -17,7 +17,7 @@
 #define NCD_TABLENAME "NCD_table"
 #define QUERY_TABLENAME "query_table"
 #define NCD_RESULT_TABLENAME "NCD_result"
-float  = 0.5;
+
 
 void printhelp();
 
@@ -36,33 +36,49 @@ int GLOBAL_NEWQUERY = 0;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
 
-#define CREATE_COLLABORATION_START_TEMP "\
-DROP TABLE IF EXISTS Collaborative_Start_Temp; \
-CREATE TEMPORARY TABLE Collaborative_Start_Temp AS \
-SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM \
-FROM AnomalyQueryStart AS S \
-LEFT JOIN AnomalyJoin AS J USING(IMG1, F1)\
-LEFT JOIN AnomalyJoin AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;"
-
-
 void initTables(MYSQL *conn)
 {
 	if(conn == NULL) exit(1);
 	
 	char sqlbuffer[BIGBUFFER];
 	
-	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Start_Temp");
-	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_COLLABORATION_START_TEMP);
+	fprintf(stderr,"Intializing Tables and Views  in Database\n");
+	fprintf(stderr,"\tDropping table %s\n","Collabrative_Config");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP table %s;", "Collabrative_Config");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 
-	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Result_Temp");
-	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Result_Temp;");
+	fprintf(stderr,"\tCreating table %s\n","Collabrative_Config");
+	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_COLLABRATION_CONFIG);
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+	
+	fprintf(stderr,"\tDropping table %s\n","Collabrative_Start");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "Collabrative_Start");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+
+	fprintf(stderr,"\tCreating table %s\n","Collabrative_Start");
+	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_COLLABORATION_START);
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+
+	
+	fprintf(stderr,"\tDropping view %s\n","Collabrative_Result");
+	snprintf(sqlbuffer, BIGBUFFER,"DROP VIEW %s;", "Collabrative_Result");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+
+	fprintf(stderr,"\tCreating view %s\n","Collabrative_Result");
+	snprintf(sqlbuffer,BIGBUFFER,"%s",CREATE_COLLABORATION_RESULT);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) FROM Collaborative_Start_Temp WHERE IMG1 != IMG2 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
+		
+		
+	fprintf(stderr,"Setting up default values\n");
+	snprintf(sqlbuffer,BIGBUFFER,"INSERT INTO Collabrative_Config (cutoff) VALUES (.5);");
 	if (mysql_query(conn,sqlbuffer) != 0)
-		mysql_print_error(conn);	
+		mysql_print_error(conn);
 
 }
 
@@ -97,8 +113,8 @@ void printhelp()
     printf("\t-P, --port=[#]\t\t Connect to MySQL using port number # (other then default)\n");
     printf("\t-S, --socket=file\t Connect to MYSQL using a UNIX Socket\n");
     printf("\t-f, --file=name\t\t Insted of MySQL - Dumps Insert statements into file: name\n");
-	printf("\t-I, --intialize\t\t Show the initialize of the temporary tables.\n");
-	printf("\t-C, --cutoff\t\t Change NCD cutoff value. Currently: %f\n",CUTOFF);
+	printf("\t-I, --intialize\t\t Initialize new tables and views. (Warning: wipes/drops old).\n");
+	printf("\t-C, --cutoff\t\t Change NCD cutoff value.\n");
 	printf("\t-s, --start\t\t Show Collabrative_Start View\n");
     printf("\t-l, --limit\t\t Limit the output of the show command.\n");
     printf("\t-h, --help\t\t This help page.\n");
@@ -121,7 +137,7 @@ int main(int argc, char *argv[] )
     FILE *fileoutput = NULL;
     MYSQL *conn = NULL;
     int limit_value = 0;
-	
+	float cutoff_value = 0;
     char sqlbuffer[BIGBUFFER];
   
     //Setup for MySQL Init File
@@ -185,14 +201,29 @@ int main(int argc, char *argv[] )
     argv += optind;
 	if(password == NULL) password = DEFAULT_PASS;
 	if(user_name == NULL) user_name = DEFAULT_USER;
-    //Setup SQL  
-    conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
+     //Setup SQL  
+     conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
      
-	initTables(conn);
-	if(SHOW_Start == 1) showTable(conn, "Collabrative_Start_Temp", limit_value);
-	showTable(conn, "Collabrative_Result_Temp", limit_value);
-    //Sql End
-    mysql_close(conn);
+	 
+	
+	if(GLOB_INIT_FLAG == 1)
+	{
+		initTables(conn);
+	}  
+	else 
+	{
+		if(cutoff_value != 0)
+		{
+			snprintf(sqlbuffer,BIGBUFFER,"UPDATE Collabrative_Config SET cutoff = %f;",cutoff_value);
+			if (mysql_query(conn,sqlbuffer) != 0)
+				mysql_print_error(conn);
+		}
+
+		if(SHOW_Start == 1) showTable(conn, "Collabrative_Start", limit_value);
+	    showTable(conn, "Collabrative_Result", limit_value);
+	}
+     //Sql End
+      mysql_close(conn);
     
     return(0);
 }
