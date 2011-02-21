@@ -17,7 +17,6 @@
 #define NCD_TABLENAME "NCD_table"
 #define QUERY_TABLENAME "query_table"
 #define NCD_RESULT_TABLENAME "NCD_result"
-float CUTOFF = 0.5;
 
 void printhelp();
 
@@ -33,6 +32,8 @@ int GLOBAL_RANDOM = 0;
 int GLOBAL_RANDOMK = 0;
 int GLOBAL_SHOWOUT = 1;
 int GLOBAL_NEWQUERY = 0;
+int MODVALUE = 0;
+float CUTOFF = 0.5;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
 
@@ -56,14 +57,25 @@ void initTables(MYSQL *conn)
 	res = mysql_use_result(conn);
 	
 
+	
 	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Result_Temp");
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Result_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
-	  mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) FROM Collaborative_Start_Temp WHERE IMG2 > IMG1 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
-	if (mysql_query(conn,sqlbuffer) != 0)
-		mysql_print_error(conn);	
-	res = mysql_use_result(conn);
+		  mysql_print_error(conn);	
+	if(MODVALUE == 0)
+	{
+		snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Result_Temp AS select IMG1, IMG2, SUM(AnomalySUM) AS SUM FROM Collaborative_Start_Temp WHERE IMG2 > IMG1 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",CUTOFF);
+		if (mysql_query(conn,sqlbuffer) != 0)
+			mysql_print_error(conn);	
+		res = mysql_use_result(conn);
+	}
+	else
+	{
+		snprintf(sqlbuffer,BIGBUFFER,"select IF(MOD(IMG1,%d) = 0, %d, MOD(IMG1,%d)) AS IMG1, IF(MOD(IMG2,%d) = 0, %d, MOD(IMG2,%d)) AS IMG2, SUM(AnomalySUM) As SUM FROM Collaborative_Start_Temp WHERE IMG2 > IMG1 AND AnomalySUM > 0 AND NCD < %f GROUP BY IMG1,IMG2;",MODVALUE,MODVALUE,MODVALUE,MODVALUE,MODVALUE,MODVALUE,CUTOFF);
+		if (mysql_query(conn,sqlbuffer) != 0)
+			mysql_print_error(conn);	
+		res = mysql_use_result(conn);
+	}
 }
 
 
@@ -84,6 +96,7 @@ struct option long_options[] =
   {"start", no_argument, NULL, 's'},
   {"limit",  required_argument, NULL, 'l'},
   {"identical",  required_argument, NULL, 'i'},
+  {"mod",  required_argument, NULL, 'm'},
   { 0, 0, 0, 0 }
 }; //long options
 
@@ -101,6 +114,7 @@ void printhelp()
 	printf("\t-C, --cutoff\t\t Change NCD cutoff value. Currently: %f\n",CUTOFF);
 	printf("\t-s, --start\t\t Show Collabrative_Start View\n");
     printf("\t-l, --limit\t\t Limit the output of the show command.\n");
+	printf("\t-m, --mod\t\t Create table with Modular math inserted into it. Example for 20 images use: -m 20.\n");
     printf("\t-h, --help\t\t This help page.\n");
   
 }
@@ -130,7 +144,7 @@ int main(int argc, char *argv[] )
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hh:IC:u:Q:qp:P:S:il:s", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hh:IC:u:Q:qp:P:S:il:sm:", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -148,6 +162,11 @@ int main(int argc, char *argv[] )
 			strncpy(tempstring,optarg,19);
 			CUTOFF = atof(tempstring);
 			if(CUTOFF <= 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
+			break;
+		case 'm' :
+			strncpy(tempstring,optarg,19);
+			MODVALUE = atoi(tempstring);
+			if(MODVALUE <= 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
 			break;
 		case 'u' :
 		  user_name = optarg;
