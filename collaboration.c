@@ -17,7 +17,7 @@
 #define NCD_TABLENAME "NCD_table"
 #define QUERY_TABLENAME "query_table"
 #define NCD_RESULT_TABLENAME "NCD_result"
-float  = 0.5;
+float CUTOFF = 0.5;
 
 void printhelp();
 
@@ -146,8 +146,8 @@ int main(int argc, char *argv[] )
 		  break;
 		case 'C' :
 			strncpy(tempstring,optarg,19);
-			cutoff_value = atof(tempstring);
-			if(cutoff_value <= 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
+			CUTOFF = atof(tempstring);
+			if(CUTOFF <= 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
 			break;
 		case 'u' :
 		  user_name = optarg;
