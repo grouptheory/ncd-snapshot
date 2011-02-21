@@ -8,7 +8,7 @@
 #include <getopt.h>
 #include "mysql.h"
 
-#define ARRAYSIZE_TIME 300
+#define ARRAYSIZE_TIME 1000
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
@@ -260,6 +260,7 @@ int main(int argc, char *argv[] )
 	for(z = 1; z <= ARRAYSIZE_TIME; z++)
 	{
 		printf("Getting data for iteration %d of %d.\n",z,ARRAYSIZE_TIME);
+		fflush(stdout);
 		initTables(conn, z);
 		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
 	}
