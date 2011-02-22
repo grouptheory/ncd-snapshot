@@ -10,6 +10,7 @@
 #include<setjmp.h>
 #include <signal.h>
 #include <time.h>
+#include <pthread.h>
 
 #define ARRAYSIZE_TIME 1000
 #define ARRAYSIZE_IMAGES 20
@@ -32,6 +33,14 @@ void printhelp();
 static void sig_catch(int);
 static sigjmp_buf jmpbuffer;
 
+//MySQL Login Information
+char *host_name = NULL;
+char *user_name = NULL;
+char *password = NULL;
+char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
+unsigned int port_num = 0;
+char *socket_name = NULL;
+
 static void sig_catcher(int sig_no)
 {
 	fprintf(stderr,"OUCH: Signal %d Received\n", sig_no);
@@ -41,6 +50,7 @@ static void sig_catcher(int sig_no)
 
 //Flags
 int GLOB_INIT_FLAG = 0; //Initialize Tables - Default NO
+int GLOBAL_THREADS = 4; //
 int GLOBAL_VERBOSE = 0;
 int GLOBAL_SHOWMATCHING = 0;
 int GLOBAL_IDENT = 0;
@@ -182,6 +192,33 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 	
 }
 
+void * ncdThread(void *parm)
+{
+	//creat data structure
+	struct storage_struct *data;
+	//Parm is a void of any structure, form parm into actual data structure 
+	data = (struct storage_struct *)parm;
+	char sqlbuffer[BIGBUFFER+2];
+
+	MYSQL *conn = NULL;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	int z, check;
+   
+	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
+	if(conn == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
+	
+	for(z = data->min; z <= data->max; z++)
+	{
+		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
+		fflush(stdout);
+		initTables(conn, z);
+		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
+	}
+	mysql_close(conn);
+}
+
+
 static const char *groups[] = {"client", 0};
 
 struct option long_options[] =
@@ -226,13 +263,7 @@ int main(int argc, char *argv[] )
 {
   
     struct dirDFS *directory;
-    char *host_name = NULL;
-    char *user_name = NULL;
-    char *password = NULL;
-    char tempstring[20];
-    char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
-    unsigned int port_num = 0;
-    char *socket_name = NULL;
+     char tempstring[20];
     int input,option_index,key;
     char scandir[PATH_MAX];
     FILE *fileoutput = NULL;
@@ -240,7 +271,10 @@ int main(int argc, char *argv[] )
     int limit_value = 0;
 	int x,y,z, check;
     char sqlbuffer[BIGBUFFER];
-  
+  	int min, max, total, start, end, modulus;
+	int thread_count = GLOBAL_THREADS;
+	int c;
+	struct storage_struct thread_storage[GLOBAL_THREADS]; //create global container
     //Setup for MySQL Init File
     my_init();
     
@@ -318,10 +352,7 @@ int main(int argc, char *argv[] )
 	
 	//if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
 	
-    //Setup SQL  
-	printf("Setting up SQL Connection\n");
-    conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
-    
+   
 	//Setting up main array
 	printf("Setting up Array for %d Images and %d iterations.\n", ARRAYSIZE_IMAGES, ARRAYSIZE_TIME);
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
@@ -332,12 +363,57 @@ int main(int argc, char *argv[] )
 	//Get Data
 	printf("Starting to get data.\n");
 	if( (sigsetjmp(jmpbuffer,1) == 0))
-	for(z = 1; z <= ARRAYSIZE_TIME; z++)
 	{
-		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
-		fflush(stdout);
-		initTables(conn, z);
-		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
+		//Fill in Min/Max
+		for(c = 0; c < GLOBAL_THREADS; c++)
+		{
+			if(c == 0) 
+			{ 
+				modulus = ARRAYSIZE_TIME / GLOBAL_THREADS; 
+				if(modulus == 0)
+				{
+					//More threats then total number? Ouch - only open one thread
+					thread_storage[c].min = min;
+					thread_storage[c].max = max;
+					thread_count = 1;
+					break;
+				}
+				start = min;
+				end = min + modulus - 1;
+			} //c== 0
+			else if ( c == (GLOBAL_THREADS -1) )
+			{
+				start = end + 1;
+				end = max;
+			}
+			else
+			{
+				start = end + 1;
+				end = start + modulus -1;
+			}
+			
+			thread_storage[c].min = start;
+			thread_storage[c].max = end;
+		}
+		//Fill in min/max
+		
+		//Start Threads
+		for(c = 0; c < thread_count; c++)
+		{
+			pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
+			printf("Starting thread[%lu] %ld of %ld to compute NCD Values\n", thread_storage[c].TID, c+1, thread_count);
+		}	
+		
+		//Wait for Threads to finish
+		for (c=0; c < thread_count; c++)
+		{
+			pthread_join(thread_storage[c].TID, NULL);
+		}
+		
+	
+	
+	
+	
 	}
 	
 	//Output to file
@@ -367,8 +443,7 @@ int main(int argc, char *argv[] )
 	
     //Sql End
 	fclose(outcsv);
-    mysql_close(conn);
-    
+   
     return(0);
 }
 
