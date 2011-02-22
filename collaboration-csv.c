@@ -97,7 +97,7 @@ void initTables(MYSQL *conn, int time)
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS AnomalyQueryStart_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE AnomalyQueryStart_Temp AS select a.image AS IMG1, n.file_one AS F1, b.image AS IMG2, n.file_two AS F2, ncd_normal FROM NCD_table AS n JOIN NCD_result AS r JOIN image_snapshot_table AS a JOIN image_snapshot_table AS b ON n.ncd_key = r.ncd_key AND n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d AND ncd_normal <= %d ORDER BY IMG1, F1;", time, CUTOFF);
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE AnomalyQueryStart_Temp AS select a.image AS IMG1, n.file_one AS F1, b.image AS IMG2, n.file_two AS F2, ncd_normal FROM NCD_table AS n JOIN NCD_result AS r JOIN image_snapshot_table AS a JOIN image_snapshot_table AS b ON n.ncd_key = r.ncd_key AND n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d AND ncd_normal <= (select cutoff FROM AnomalyConfig) ORDER BY IMG1, F1;", time);
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 	res = mysql_use_result(conn);
@@ -188,7 +188,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
 			array[image_one][image_two][time] = collaboration_num;
-			//fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
+			fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
 	}
 	
 }
