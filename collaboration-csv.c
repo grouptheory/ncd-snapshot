@@ -27,7 +27,6 @@
 struct storage_struct {
 	long int min;
 	long int max;
-	float *array;
 	pthread_t TID; //thread ID
 };
 
@@ -65,7 +64,7 @@ int MODVALUE = ARRAYSIZE_IMAGES;
 float CUTOFF = 0.5;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
-extern float array[ARRAYSIZE_IMAGES][ARRAYSIZE_IMAGES][ARRAYSIZE_TIME];
+float array[ARRAYSIZE_IMAGES][ARRAYSIZE_IMAGES][ARRAYSIZE_TIME];
 
 char *stimeStamp(char *timeS)
 {	
@@ -425,7 +424,7 @@ int main(int argc, char *argv[] )
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
-			check = 0;
+			check = 1;
 			for(z=0; z < ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
