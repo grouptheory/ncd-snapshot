@@ -198,16 +198,12 @@ void * getThread(void *parm)
 	struct storage_struct *data;
 	//Parm is a void of any structure, form parm into actual data structure 
 	data = (struct storage_struct *)parm;
-	char sqlbuffer[BIGBUFFER+2];
-
 	MYSQL *conn = NULL;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	
-	int z, check;
+	int z;
    fprintf(stderr,"SQL Login:[%lu] %s %s %s %s %d %s\n",data->TID,host_name,user_name,password,db_name, port_num, socket_name);
+	
 	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
-	if(conn == NULL) { fprintf(stderr,"[%lu]Error opening MySQL Connection.\n",data->TID); exit(1); }
+	if(conn == NULL) { fprintf(stderr,"[%lu] Error opening MySQL Connection.\n",data->TID); exit(1); }
 	
 	for(z = data->min; z <= data->max; z++)
 	{
@@ -263,19 +259,17 @@ void printhelp()
 int main(int argc, char *argv[] )
 {
   
-    struct dirDFS *directory;
-     char tempstring[20];
+    char tempstring[20];
     int input,option_index,key;
-    char scandir[PATH_MAX];
     FILE *fileoutput = NULL;
     int limit_value = 0;
 	int x,y,z, check;
     char sqlbuffer[BIGBUFFER];
 	char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
-
   	int min, max, total, start, end, modulus;
 	int thread_count = GLOBAL_THREADS;
 	int c;
+	MYSQL *conn = NULL;
 	struct storage_struct thread_storage[GLOBAL_THREADS]; //create global container
 	pthread_attr_t attr;
 	//get default attributes 
@@ -359,7 +353,8 @@ int main(int argc, char *argv[] )
 	sigprocmask(SIG_BLOCK, &myset,NULL);
 	
 	//if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
-	
+	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
+	if(conn == NULL) { fprintf(stderr,"[Main] Error opening MySQL Connection.\n"); exit(1); }
    
 	//Setting up main array
 	printf("Setting up Array for %d Images and %d iterations.\n", ARRAYSIZE_IMAGES, ARRAYSIZE_TIME);
@@ -451,7 +446,7 @@ int main(int argc, char *argv[] )
 	
     //Sql End
 	fclose(outcsv);
-   
+   mysql_close(conn);
     return(0);
 }
 
