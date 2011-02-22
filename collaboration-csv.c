@@ -205,7 +205,7 @@ void * getThread(void *parm)
 	MYSQL_ROW row;
 	int z, check;
    
-	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
+	conn = mysql_connect(NULL,user_name,password,db_name, port_num, socket_name, 0);
 	if(conn == NULL) { fprintf(stderr,"Error opening MySQL Connection.\n"); exit(1); }
 	
 	for(z = data->min; z <= data->max; z++)
