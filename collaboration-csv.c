@@ -38,7 +38,6 @@ static sigjmp_buf jmpbuffer;
 char *host_name = NULL;
 char *user_name = NULL;
 char *password = NULL;
-char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
 unsigned int port_num = 0;
 char *socket_name = NULL;
 
@@ -193,7 +192,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 	
 }
 
-void * ncdThread(void *parm)
+void * getThread(void *parm)
 {
 	//creat data structure
 	struct storage_struct *data;
@@ -268,10 +267,11 @@ int main(int argc, char *argv[] )
     int input,option_index,key;
     char scandir[PATH_MAX];
     FILE *fileoutput = NULL;
-    MYSQL *conn = NULL;
     int limit_value = 0;
 	int x,y,z, check;
     char sqlbuffer[BIGBUFFER];
+	char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
+
   	int min, max, total, start, end, modulus;
 	int thread_count = GLOBAL_THREADS;
 	int c;
@@ -284,6 +284,7 @@ int main(int argc, char *argv[] )
     //Setup for MySQL Init File
     my_init();
     
+	
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
@@ -406,8 +407,8 @@ int main(int argc, char *argv[] )
 		//Start Threads
 		for(c = 0; c < thread_count; c++)
 		{
-			pthread_create(&thread_storage[c].TID, &attr, ncdThread, (void *) &thread_storage[c]);
-			printf("Starting thread[%lu] %ld of %ld to compute NCD Values\n", thread_storage[c].TID, c+1, thread_count);
+			pthread_create(&thread_storage[c].TID, &attr, getThread, (void *) &thread_storage[c]);
+			printf("Starting thread[%lu] %ld of %ld to gather data (%d - %d)\n", thread_storage[c].TID, c+1, thread_count, thread_storage[c].min, thread_storage[c].max);
 		}	
 		
 		//Wait for Threads to finish
@@ -415,9 +416,6 @@ int main(int argc, char *argv[] )
 		{
 			pthread_join(thread_storage[c].TID, NULL);
 		}
-		
-	
-	
 	
 	
 	}
