@@ -209,7 +209,7 @@ void * getThread(void *parm)
 		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
 		fflush(stdout);
 		initTables(conn, z);
-		getTabledata(conn, "Collaborative_Result_Temp", 0, z, data->array);
+		getTabledata(conn, "Collaborative_Result_Temp", 0, z);
 	}
 	mysql_close(conn);
 }
