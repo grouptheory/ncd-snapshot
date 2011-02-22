@@ -370,6 +370,9 @@ int main(int argc, char *argv[] )
 	
 	//Get Data
 	printf("Starting to get data.\n");
+	min = 1;
+	max = ARRAYSIZE_TIME;
+	
 	if( (sigsetjmp(jmpbuffer,1) == 0))
 	{
 		//Fill in Min/Max
@@ -380,7 +383,7 @@ int main(int argc, char *argv[] )
 				modulus = ARRAYSIZE_TIME / GLOBAL_THREADS; 
 				if(modulus == 0)
 				{
-					//More threats then total number? Ouch - only open one thread
+					//More threads then total number? Ouch - only open one thread
 					thread_storage[c].min = min;
 					thread_storage[c].max = max;
 					thread_count = 1;
