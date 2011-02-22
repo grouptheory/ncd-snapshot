@@ -9,6 +9,7 @@
 #include "mysql.h"
 #include<setjmp.h>
 #include <signal.h>
+#include <time.h>
 
 #define ARRAYSIZE_TIME 1000
 #define ARRAYSIZE_IMAGES 20
@@ -49,7 +50,19 @@ char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
 float array[ARRAYSIZE_IMAGES][ARRAYSIZE_IMAGES][ARRAYSIZE_TIME];
 
-
+char *stimeStamp(char *timeS)
+{	
+	time_t epoch;
+	time_t *epoch_ptr;
+	char timebuf[100];
+	char *timebuf_ptr = timebuf;
+	epoch_ptr = &epoch;
+	if (time(epoch_ptr) == -1) {fprintf(stderr,"Error getting TOD.\n"); exit(2); }
+	strftime(timebuf, 100, "%b %d %T",localtime(epoch_ptr));
+	strftime(timeS, 100, "%b %d %T",localtime(epoch_ptr));
+	//return strtok(asctime(localtime(epoch_ptr)), "\n");
+	return timebuf_ptr;
+}
 
 
 void initTables(MYSQL *conn, int time)
@@ -275,7 +288,7 @@ int main(int argc, char *argv[] )
 	printf("Starting to get data.\n");
 	for(z = 1; z <= ARRAYSIZE_TIME; z++)
 	{
-		printf("Getting data for iteration %d of %d.\n",z,ARRAYSIZE_TIME);
+		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
 		fflush(stdout);
 		initTables(conn, z);
 		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
