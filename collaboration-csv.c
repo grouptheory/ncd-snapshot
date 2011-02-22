@@ -22,6 +22,7 @@
 #define NCD_TABLENAME "NCD_table"
 #define QUERY_TABLENAME "query_table"
 #define NCD_RESULT_TABLENAME "NCD_result"
+#define PASS_SIZE 100
 
 struct storage_struct {
 	long int min;
@@ -258,7 +259,7 @@ void printhelp()
     printf("\t-h, --help\t\t This help page.\n");
   
 }
-#define PASS_SIZE 100
+
 int main(int argc, char *argv[] )
 {
   
@@ -275,6 +276,11 @@ int main(int argc, char *argv[] )
 	int thread_count = GLOBAL_THREADS;
 	int c;
 	struct storage_struct thread_storage[GLOBAL_THREADS]; //create global container
+	pthread_attr_t attr;
+	//get default attributes 
+	pthread_attr_init(&attr);
+	//Must be set to wait for Threads to finish
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     //Setup for MySQL Init File
     my_init();
     
