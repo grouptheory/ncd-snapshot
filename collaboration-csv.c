@@ -286,6 +286,7 @@ int main(int argc, char *argv[] )
 	
 	//Get Data
 	printf("Starting to get data.\n");
+	if( (sigsetjmp(jmpbuffer,1) == 0))
 	for(z = 1; z <= ARRAYSIZE_TIME; z++)
 	{
 		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
@@ -294,7 +295,6 @@ int main(int argc, char *argv[] )
 		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
 	}
 	
-	sigsetjmp(jmpbuffer,1);
 	//Output to file
 	fprintf(stderr,"Writting file.\n");
 	
