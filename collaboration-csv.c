@@ -106,7 +106,7 @@ void initTables(MYSQL *conn, int time)
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Anomaly_Number_Collabrators_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Anomaly_Number_Collabrators_Temp AS select DISTINCT IMG1, F1, COUNT(IMG2) As NUM FROM AnomalyQueryStart GROUP BY F1;");
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Anomaly_Number_Collabrators_Temp AS select DISTINCT IMG1, F1, COUNT(IMG2) As NUM FROM AnomalyQueryStart_Temp GROUP BY F1;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 	res = mysql_use_result(conn);
@@ -188,7 +188,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
 			array[image_one][image_two][time] = collaboration_num;
-			fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
+			//fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
 	}
 	
 }
