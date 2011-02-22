@@ -22,6 +22,12 @@
 #define QUERY_TABLENAME "query_table"
 #define NCD_RESULT_TABLENAME "NCD_result"
 
+struct storage_struct {
+	long int min;
+	long int max;
+	pthread_t TID; //thread ID
+};
+
 void printhelp();
 static void sig_catch(int);
 static sigjmp_buf jmpbuffer;
@@ -72,15 +78,46 @@ void initTables(MYSQL *conn, int time)
 	MYSQL_ROW row;
 	char sqlbuffer[BIGBUFFER];
 	
-	snprintf(sqlbuffer,BIGBUFFER,"UPDATE AnomalyConfig SET query = %d;",time);
+	/*snprintf(sqlbuffer,BIGBUFFER,"UPDATE AnomalyConfig SET query = %d;",time);
 		if (mysql_query(conn,sqlbuffer) != 0)
 			mysql_print_error(conn);
+	*/
+	// Anomaly Temps
+	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","AnomalyQueryStart_Temp;");
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS AnomalyQueryStart_Temp;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE AnomalyQueryStart_Temp AS select a.image AS IMG1, n.file_one AS F1, b.image AS IMG2, n.file_two AS F2, ncd_normal FROM NCD_table AS n JOIN NCD_result AS r JOIN image_snapshot_table AS a JOIN image_snapshot_table AS b ON n.ncd_key = r.ncd_key AND n.file_one = a.item AND n.file_two = b.item AND n.querynumber = %d AND ncd_normal <= %d ORDER BY IMG1, F1;", time, CUTOFF);
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+	res = mysql_use_result(conn);
+	
+		if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Anomaly_Number_Collabrators_Temp");
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Anomaly_Number_Collabrators_Temp;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Anomaly_Number_Collabrators_Temp AS select DISTINCT IMG1, F1, COUNT(IMG2) As NUM FROM AnomalyQueryStart GROUP BY F1;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+	res = mysql_use_result(conn);
+	
+		if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","AnomalyJoin_Temp");
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS AnomalyJoin_Temp;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE AnomalyJoin_Temp AS SELECT A.IMG1, A.F1, C.anomaly FROM Anomaly_Number_Collabrators_Temp AS A JOIN AnomalyCurve AS C ON A.NUM = C.number;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+	res = mysql_use_result(conn);
+	
+	//Anomaly Temps
+	
 	
 	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","Collaborative_Start_Temp");
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Start_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Start_Temp AS SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM FROM AnomalyQueryStart AS S LEFT JOIN AnomalyJoin AS J USING(IMG1, F1) LEFT JOIN AnomalyJoin AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;");
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Start_Temp AS SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM FROM AnomalyQueryStart_Temp AS S LEFT JOIN AnomalyJoin_Temp AS J USING(IMG1, F1) LEFT JOIN AnomalyJoin_Temp AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 	res = mysql_use_result(conn);
@@ -271,7 +308,7 @@ int main(int argc, char *argv[] )
 	sigdelset(&myset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &myset,NULL);
 	
-	if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
+	//if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
 	
     //Setup SQL  
 	printf("Setting up SQL Connection\n");
