@@ -12,7 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define ARRAYSIZE_TIME 1000
+#define ARRAYSIZE_TIME 100
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
@@ -27,6 +27,7 @@
 struct storage_struct {
 	long int min;
 	long int max;
+	float *array;
 	pthread_t TID; //thread ID
 };
 
@@ -154,7 +155,7 @@ void initTables(MYSQL *conn, int time)
 
 }
 
-void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
+void getTabledata(MYSQL *connread, char *table, int limit_value, int time, float *thearray)
 {
     if(connread == NULL) exit(1);
 
@@ -187,7 +188,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 			image_one = atoi(row[0]);
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
-			array[image_one][image_two][time] = collaboration_num;
+			thearray[image_one][image_two][time] = collaboration_num;
 	}
 	
 }
@@ -208,7 +209,7 @@ void * getThread(void *parm)
 		printf("%s : Getting data for iteration %d of %d.\n",stimeStamp(NULL), z,ARRAYSIZE_TIME);
 		fflush(stdout);
 		initTables(conn, z);
-		getTabledata(conn, "Collaborative_Result_Temp", 0, z);
+		getTabledata(conn, "Collaborative_Result_Temp", 0, z, data->array);
 	}
 	mysql_close(conn);
 }
@@ -368,6 +369,12 @@ int main(int argc, char *argv[] )
 	
 	if( (sigsetjmp(jmpbuffer,1) == 0))
 	{
+		for(c = 0; c < GLOBAL_THREADS; c++)
+		{
+		//Fill in the blanks
+		thread_storage[c].array = &array;
+		} //Fill in the blanks
+		
 		//Fill in Min/Max
 		for(c = 0; c < GLOBAL_THREADS; c++)
 		{
