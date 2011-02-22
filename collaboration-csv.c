@@ -200,9 +200,7 @@ void * getThread(void *parm)
 	data = (struct storage_struct *)parm;
 	MYSQL *conn = NULL;
 	int z;
-   fprintf(stderr,"SQL Login:[%lu] %s %s %s %s %d %s\n",data->TID,host_name,user_name,password,db_name, port_num, socket_name);
-	
-	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
+  	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(conn == NULL) { fprintf(stderr,"[%lu] Error opening MySQL Connection.\n",data->TID); exit(1); }
 	
 	for(z = data->min; z <= data->max; z++)
@@ -352,7 +350,7 @@ int main(int argc, char *argv[] )
 	sigdelset(&myset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &myset,NULL);
 	
-	//if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
+	if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
 	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(conn == NULL) { fprintf(stderr,"[Main] Error opening MySQL Connection.\n"); exit(1); }
    
