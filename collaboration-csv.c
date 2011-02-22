@@ -12,7 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define ARRAYSIZE_TIME 100
+#define ARRAYSIZE_TIME 10
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
@@ -65,7 +65,7 @@ int MODVALUE = ARRAYSIZE_IMAGES;
 float CUTOFF = 0.5;
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
-float array[ARRAYSIZE_IMAGES][ARRAYSIZE_IMAGES][ARRAYSIZE_TIME];
+extern float array[ARRAYSIZE_IMAGES][ARRAYSIZE_IMAGES][ARRAYSIZE_TIME];
 
 char *stimeStamp(char *timeS)
 {	
@@ -155,7 +155,7 @@ void initTables(MYSQL *conn, int time)
 
 }
 
-void getTabledata(MYSQL *connread, char *table, int limit_value, int time, float *thearray)
+void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 {
     if(connread == NULL) exit(1);
 
@@ -188,7 +188,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time, float
 			image_one = atoi(row[0]);
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
-			thearray[image_one][image_two][time] = collaboration_num;
+			array[image_one][image_two][time] = collaboration_num;
 	}
 	
 }
@@ -368,13 +368,7 @@ int main(int argc, char *argv[] )
 	max = ARRAYSIZE_TIME;
 	
 	if( (sigsetjmp(jmpbuffer,1) == 0))
-	{
-		for(c = 0; c < GLOBAL_THREADS; c++)
-		{
-		//Fill in the blanks
-		thread_storage[c].array = &array;
-		} //Fill in the blanks
-		
+	{	
 		//Fill in Min/Max
 		for(c = 0; c < GLOBAL_THREADS; c++)
 		{
