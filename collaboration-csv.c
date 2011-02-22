@@ -109,6 +109,14 @@ void initTables(MYSQL *conn, int time)
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 	res = mysql_use_result(conn);
+	if(GLOB_INIT_FLAG) fprintf(stderr,"\tCreating temporary table %s\n","AnomalyJoin_Temp2");
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS AnomalyJoin_Temp2;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE AnomalyJoin_Temp2 AS SELECT A.IMG1, A.F1, C.anomaly FROM Anomaly_Number_Collabrators_Temp AS A JOIN AnomalyCurve AS C ON A.NUM = C.number;");
+	if (mysql_query(conn,sqlbuffer) != 0)
+		mysql_print_error(conn);
+	res = mysql_use_result(conn);
 	
 	//Anomaly Temps
 	
@@ -117,7 +125,7 @@ void initTables(MYSQL *conn, int time)
 	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Collaborative_Start_Temp;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);	
-	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Start_Temp AS SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM FROM AnomalyQueryStart_Temp AS S LEFT JOIN AnomalyJoin_Temp AS J USING(IMG1, F1) LEFT JOIN AnomalyJoin_Temp AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;");
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Collaborative_Start_Temp AS SELECT DISTINCT S.IMG1 AS IMG1, S.F1 AS F1, J.anomaly AS A1, S.IMG2 AS IMG2, S.F2 AS F2, J2.anomaly AS A2, S.ncd_normal AS NCD, ROUND((J.anomaly + J2.anomaly),3) AS AnomalySUM FROM AnomalyQueryStart_Temp AS S LEFT JOIN AnomalyJoin_Temp AS J USING(IMG1, F1) LEFT JOIN AnomalyJoin_Temp2 AS J2 ON S.IMG2 = J2.IMG1 AND S.F2 = J2.F1;");
 	if (mysql_query(conn,sqlbuffer) != 0)
 		mysql_print_error(conn);
 	res = mysql_use_result(conn);
