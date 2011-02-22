@@ -7,6 +7,8 @@
 #include <mysql/mysql.h>
 #include <getopt.h>
 #include "mysql.h"
+#include<setjmp.h>
+#include <signal.h>
 
 #define ARRAYSIZE_TIME 1000
 #define ARRAYSIZE_IMAGES 20
@@ -20,7 +22,15 @@
 #define NCD_RESULT_TABLENAME "NCD_result"
 
 void printhelp();
+static void sig_catch(int);
+static sigjmp_buf jmpbuffer;
 
+static void sig_catcher(int sig_no)
+{
+	fprintf(stderr,"OUCH: Signal %d Received\n", sig_no);
+	siglongjmp(jmpbuffer, 1);	
+	
+}//signal Catch
 
 //Flags
 int GLOB_INIT_FLAG = 0; //Initialize Tables - Default NO
@@ -243,6 +253,12 @@ int main(int argc, char *argv[] )
 	FILE *outcsv;
 	if( (outcsv= fopen("output.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output.csv"); }
 	
+	sigset_t myset;
+	sigfillset(&myset);
+	sigdelset(&myset, SIGTERM);
+	sigprocmask(SIG_BLOCK, &myset,NULL);
+	
+	if(signal(SIGTERM,sig_catcher) == SIG_ERR) { fprintf(stderr,"Error Setting up Signal Catcher!\n"); exit(2);}
 	
     //Setup SQL  
 	printf("Setting up SQL Connection\n");
@@ -265,7 +281,10 @@ int main(int argc, char *argv[] )
 		getTabledata(conn, "Collaborative_Result_Temp", limit_value, z);
 	}
 	
+	sigsetjmp(jmpbuffer,1);
 	//Output to file
+	fprintf(stderr,"Writting file.\n");
+	
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
