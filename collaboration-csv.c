@@ -188,7 +188,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
 			array[image_one][image_two][time] = collaboration_num;
-			fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
+			//fprintf(stderr,"T%d: %d,%d,%f\n",time,image_one,image_two,collaboration_num);
 	}
 	
 }
@@ -425,7 +425,7 @@ int main(int argc, char *argv[] )
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
-			check = 1;
+			check = 0;
 			for(z=0; z < ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
