@@ -6,11 +6,12 @@
 #include <string.h>
 #include <mysql/mysql.h>
 //#include <mysql/my_sys.h>
+#include <getopt.h>
 #include <pthread.h>
 #include <dlfcn.h>
 #include "mysql.h"
 
-#define DEFAULT_DISTANCE_LIB "libncd.so.1.0"
+#define DEFAULT_DISTANCE_LIB "/usr/local/lib/libncd.so.1.0"
 
 
 #define BIGBUFFER 10000
@@ -541,33 +542,33 @@ int main(int argc, char *argv[] )
 			case 'c' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("CHUNK_SIZE", temp_int);
+			  if(libopen > 0) setopt("CHUNK_SIZE", (void *)temp_int);
 			  if(temp_int < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
 			break;
 
 			case 'O' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("OFFSET", temp_int);
+			  if(libopen > 0) setopt("OFFSET", (void *) temp_int);
 			  if(temp_int < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
 			break;
 			case 'D' :
 				if(libopen > 0) setopt("DOUBLE", 1);
 			  break;
 			case 'o' :
-			  if(libopen > 0) setopt("RANDOM_OFFSET", 1);
+			  if(libopen > 0) setopt("RANDOM_OFFSET", (void *)1);
 			break;
 			case 'T' :
 				strncpy(tempstring,optarg,19);
 				temp_int = atoi(tempstring);
-				if(libopen > 0) setopt("TINY_CHUNK_SIZE", temp_int;
+				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (void *)temp_int;
 				if(temp_int < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
 			break;
 			case 'k' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
 			  if(temp_int < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			  if(libopen > 0) setopt("RANDOM_K", temp_int);
+			  if(libopen > 0) setopt("RANDOM_K", (void *) temp_int);
 			break;
 				  
 		}//switch      
