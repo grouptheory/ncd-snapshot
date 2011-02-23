@@ -416,6 +416,7 @@ void printhelp()
     printf("\t-l, --limit\t Limit the output of the show command.\n");
 	printf("\t-A, --threads\t Change number of threAds to use.\n");
     printf("\t-N, --nodelete\t Skips the removal of previous Values.\n");
+	printf("\t-L, --library\t Change distance library.\n");
 	printf("\t\t\t NCD Options\n");
     printf("\t-c, --chunk\t The value of bytes that we check,\n\t\t\t Default is currently set to: %d\n",DEFAULT_CHUNK);
     printf("\t-o, --random\t Use a random offset to compare.\n");
@@ -429,7 +430,7 @@ void printhelp()
   
 }
 
-int openLibrary(char *string_lib)
+int openLib(char *string_lib)
 {
 
 	dlclose(lib);
@@ -463,13 +464,9 @@ int openLibrary(char *string_lib)
 int main(int argc, char *argv[] )
 {
   
-    struct dirDFS *directory;
-	char cfilename[PATH_MAX+1];
-    char tempstring[20];
+    char tempstring[PATH_MAX+1];
     int input,option_index,key;
-    char scandir[PATH_MAX+1];
     FILE *fileoutput = NULL;
-    char OUTPUT_PATH[PATH_MAX+1];
     MYSQL *connread = NULL;
     MYSQL *connwrite = NULL;
 	char *query_number = NULL;
@@ -483,13 +480,13 @@ int main(int argc, char *argv[] )
     //Setup for MySQL Init File
     my_init();
     
-	libopen = openlib(DEFAULT_DISTANCE_LIB);
+	libopen = openLib(DEFAULT_DISTANCE_LIB);
 	if(libopen == - 1) printf("Warning: Failed to open default distance library: %s\n", DEFAULT_DISTANCE_LIB);
 	
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:N", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:NL:", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -537,7 +534,11 @@ int main(int argc, char *argv[] )
 			  GLOBAL_THREADS = atoi(tempstring);
 			  if(GLOBAL_THREADS < 1) { fprintf(stdout,"You need at least 1 thread! Setting to default.\n"); GLOBAL_THREADS = 4; }
 			break;
-			  case 'c' :
+			case 'L' :
+			  strncpy(tempstring,optarg,PATH_MAX);
+			  openLib(tempstring);
+			break;		
+			case 'c' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
 			  if(libopen > 0) setopt("CHUNK_SIZE", temp_int);
@@ -595,7 +596,7 @@ int main(int argc, char *argv[] )
 	}
 
 	mysql_close(connread);
-    
+    dlclose(lib);
     return(0);
 }
 
