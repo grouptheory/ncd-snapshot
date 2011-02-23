@@ -481,7 +481,7 @@ int main(int argc, char *argv[] )
     //Setup for MySQL Init File
     my_init();
     
-	libopen = openLib(DEFAULT_DISTANCE_LIB);
+	//libopen = openLib(DEFAULT_DISTANCE_LIB);
 	if(libopen == - 1) printf("Warning: Failed to open default distance library: %s\n", DEFAULT_DISTANCE_LIB);
 	
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
