@@ -12,6 +12,7 @@ Added a command line option for Consipiracy Size Group
 	
 2/19 - Changes to Random - All 0 or all 1's
 
+2/23 - Changes to SRAND functions - Removed SEEDER and Srand functions and replaced SeedX and SeedY - where SeedX is the intial srand seed that does not change and SeedY is passed to each iteration and should be changing every iteration.
 */
 
 #include <stdio.h>
@@ -26,10 +27,10 @@ Added a command line option for Consipiracy Size Group
 #include <unistd.h>
 #include <getopt.h>
 
-#define VERSION "3"
+#define VERSION "4"
 //================================================
 
-// these should really eventually be args
+// these should really `eventually` be args
 
 // people
 #define PEOPLE 20
@@ -70,13 +71,6 @@ int CONSPIRACYSIZE = 2;
 #define MOD_UPPER 8192
 #define MOD_LOWER 8192
 
-struct Srand_Struct {
-	char filename[PATH_MAX];
-	int readwrite;
-	FILE *file;
-};
-typedef struct Srand_Struct Srand_Struct;
-Srand_Struct SrandStruct;
 
 
 //================================================
@@ -113,33 +107,7 @@ int doModify(char *, char *, int, ssize_t);
 int doModifyRandOffset(char *, char *, ssize_t);
 
 
-int Srand(Srand_Struct *S)
-{
 
-	long unsigned int seed;
-	size_t io;
-	
-	if(S->file == NULL) 
-		if(S->readwrite == 0) { if( (S->file = fopen(S->filename, "wb")) == NULL) {printf("Error opening %s\n", S->filename); exit(1);}}
-		else { if( (S->file = fopen(S->filename, "rb")) == NULL) {printf("Error opening %s\n", S->filename); exit(1);}}
-		
-	if(S->readwrite == 0) {
-		//write new and seed
-		seed = (long unsigned int) (time(NULL) & rand());
-		io = fwrite(&seed, sizeof(long unsigned int), 1, S->file);
-		if(io == 0) {printf("Failed to write to file %s\n",S->filename); exit(1); }
-		srand(seed);
-	}
-	else
-	{
-		io = fread(&seed, sizeof(long unsigned int), 1, S->file);
-		if(io == 0) {printf("Failed to read from file %s\n",S->filename); exit(1); }
-		srand(seed);	
-	}
-	printf("Intialize SRAND with: %lu\n",seed);
-	
-	return 0;
-} // SRand
 
 //================================================
 // SOURCE 
@@ -312,8 +280,7 @@ int doPickFileByDirSearch(char *CWD,  char *filename)
 	}//while get dcount
 	
 	if(fcount == 0) {printf("No Files found in %s\n",CWD); return 2;}
-	Srand (&SrandStruct);
-    randnum = (rand() % fcount) + 1;
+	randnum = (rand() % fcount) + 1;
 	rewinddir(dp);
 	count = 0;
 	
@@ -390,7 +357,7 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	off_t eofbytes = 0;
 	off_t startoff = 0;
 	
-	Srand (&SrandStruct);
+	
 	char fullfilename[PATH_MAX+1];
 	snprintf(fullfilename, PATH_MAX,"%s/%s",userdir,filename); 	
 	
@@ -413,10 +380,10 @@ int doModifyRandOffset(char *userdir, char *filename, ssize_t modsize)
 	return 0;
 }
 
-int outputSeed(int seed)
+int outputSeed(int seed, char *name)
 {
 	FILE *seedout;
-	if( (seedout= fopen("SEED", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","SEED"); }
+	if( (seedout= fopen(name, "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","SEED"); }
 	fprintf(seedout,"%d",seed);
 	fclose(seedout);
 }
@@ -430,7 +397,7 @@ int doPickFileByMemory(Person* p, int* groupfiles, char *filename)
 		max += groupfiles[p->groups[i]->group_id];
 	}
 
-	Srand (&SrandStruct);
+	
 	filenum = rand() % max;
 	
 	for(i = 0; i < p->num_groups;i++)
@@ -486,23 +453,22 @@ void printhelp(char *filename)
 	printf("Work Group file Simulation Version %s.\n",VERSION);
 	printf("Bilal Khan\tRichard Alcalde \n"); 
 	printf("Usage: ./%s [OPTIONS]\n",filename);
-	printf("\t-S, --srandomfile\t\tFilename of SRAND seed store.\n\t\t\t\t\tDefault %s\n", DEFAULT_SRANDNAME);	
-	printf("\t-R, --srandomread\t\tInstead of creating new SRAND seeds, use values from file.\n\t\t\t\t\n");	
-	printf("\t-s, --seed\t\tUse a previously created seed for intial group creation.\n\t\t\t\tExample --seed 1234567\n");	
+	printf("\t-s, --seedx\t\tSRAND seed X - used for people and group creation.\n\t\t\t\tExample --seedx 1234567\n");	
+	printf("\t-S, --seedy\t\tSRAND seed Y - used for file creation.\n\t\t\t\t\tExample --seedy 1234567\n");	
 	printf("\t-c, --create\tCreate files - required for first run.\n\t\t\t\t\n");
 	printf("\t-d, --duration\tHow many iterations on this simulation.\n\t\t\t\tExample --duration 1\tDefault: %d\n", DEFAULT_SIMDURATION);
 	printf("\t-C, --conspiracysize\tHow many people in the conspiract group.\tDefault: %d\n", CONSPIRACYSIZE);
 	printf("\t-h, --help\t This help page.\n");
-	
 }
+
 //This is used for Get Options
 struct option long_options[] =
 {
    {"help", no_argument, NULL, 'h'},
    {"create", no_argument, NULL, 'c'},
    {"duration", required_argument, NULL, 'd'},
-   {"seed", required_argument, NULL, 's'},
-   {"srandomfile", required_argument, NULL, 'S'},
+   {"seedx", required_argument, NULL, 's'},
+   {"seedy", required_argument, NULL, 'S'},
    {"srandomread", no_argument, NULL, 'R'},
    {"conspiracysize", required_argument, NULL, 'C'},
    { 0, 0, 0, 0 }
@@ -519,13 +485,11 @@ int main(int argc, char** argv) {
 	char tempstring[PATH_MAX];
 	int input, option_index;
 	int SIMDURATION = DEFAULT_SIMDURATION;
-	int SEED = 0;
-
+	int SEEDX = 0;
+	int SEEDY = 0;
 	short CREATENEW = 0;
-	strncpy(SrandStruct.filename, DEFAULT_SRANDNAME, PATH_MAX);
-	SrandStruct.readwrite = 0;
   
-	while((input = getopt_long(argc, argv, "hs:d:S:RcC:", long_options, &option_index)) != EOF )
+	while((input = getopt_long(argc, argv, "hs:d:S:cC:", long_options, &option_index)) != EOF )
 	{
 		switch(input)
 		{
@@ -540,14 +504,13 @@ int main(int argc, char** argv) {
 		break;
 		case 's' :
 		strncpy(tempstring,optarg,19);
-		SEED = atoi(tempstring);
-		if(SEED < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-		break;
-		case 'R' :
-		SrandStruct.readwrite = 1;
+		SEEDX = atoi(tempstring);
+		if(SEEDX < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
 		break;
 		case 'S' :
-		strncpy(SrandStruct.filename, optarg, PATH_MAX);		
+		strncpy(tempstring,optarg,19);
+		SEEDY = atoi(tempstring);
+		if(SEEDY < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }	
 		break;		
 		case 'c':
 		CREATENEW = 1;
@@ -564,11 +527,15 @@ int main(int argc, char** argv) {
 	argc -= optind; 
 	argv += optind;
 	
-	//Create new seed
-	if(SEED == 0)
-		SEED = (int)(time(NULL));	
-	
-	srand(SEED);
+	//Create new seedX
+	if(SEEDX == 0)
+	{
+		fprintf(stderr,"No Seed X provided so we will have to create one.\n");
+		SEEDX = (int)(time(NULL));	
+	}
+	printf("Seed X - used to create simulation: %d\n",SEEDX);
+	outputSeed(SEEDX, "SEED-X");
+	srand(SEEDX);
 	
   
   // make people
@@ -593,6 +560,7 @@ int main(int argc, char** argv) {
   // group 1 is a conspiracy
   groupfiles[1] = NUMCONSPIRACYFILES;
   // other groups sizes are randomly chosen
+  
   for (i=2; i<ORGS; i++) {
     groupfiles[i] = rand() % (MAXGROUPFILES-MINGROUPFILES+1) + MINGROUPFILES;
   }
@@ -606,6 +574,16 @@ int main(int argc, char** argv) {
   // tell a person about the groups they are in
   informPeopleOfTheirGroups(people, orgs);
   
+	//Read or Create new seedY
+	if(SEEDY == 0)
+	{
+		fprintf(stderr,"No Seed Y provided so we will have to create one.\n");
+		SEEDY = (int)(time(NULL));	
+	}
+	printf("Seed Y - used in file creation and remainder of the simulation: %d\n",SEEDY);
+	srand(SEEDY);
+	
+	//Create new files
   if(CREATENEW)
   {
 	for (i=0; i<ORGS; i++) 
@@ -613,11 +591,8 @@ int main(int argc, char** argv) {
 		makeFiles(orgs[i], i, groupsizes[i], groupfiles[i], people);
 		}	
   }
-
-  printf("Seed used to create simulation: %d\n",SEED);
-  outputSeed(SEED);
-  // simulate the passage of time
-  
+ 
+ //Actual Simulation
   for (t=0; t<SIMDURATION; t++) {
     printf(">>> time is now %d\n", t);
 
@@ -632,6 +607,8 @@ int main(int argc, char** argv) {
     }
   }
   
+  //Used as the next Seed - in the next interation in the series
+  outputSeed(rand(), "SEED-Y");
   
 }
 

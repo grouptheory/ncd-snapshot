@@ -15,8 +15,8 @@ query:
 ncd:
 	$(CC)  ncd.c mysql.c -o ncd -lm -lzip -pthread $(LIBS) $(DEFINES)
 
-ncd-nothread:
-	$(CC)  no-thread-ncd.c mysql.c -o no-thread-ncd -lm -lzip $(LIBS) $(DEFINES)
+distance:
+	$(CC)  distance.c mysql.c -o distance $(LIBS) $(DEFINES)
 	
 simpleshowdata:
 	$(CC)  simpleshowdata.c mysql.c -o simpleshowdata $(LIBS) $(DEFINES)
@@ -48,3 +48,4 @@ clean:
 	rm company
 	rm no-thread-ncd
 	rm collaboration-csv
+	rm distance
