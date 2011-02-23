@@ -434,17 +434,17 @@ void printhelp()
 int openLib(char *string_lib)
 {
 
-	dlclose(lib);
+	dlclose(distancelib);
 	dlerror();
 	
-	lib = dlopen(string_lib, RTLD_NOW);
+	distancelib = dlopen(string_lib, RTLD_NOW);
 	if(!lib)
 		{
 			printf("Failed to open %d: %s\n",string_lib, dlerror());
 			return -1;
 		}
 	dlerror();
-	distance = (distanceFunction) dlsym(lib,"distanceFunction");
+	distance = (distanceFunction) dlsym(distancelib,"distanceFunction");
 	err=dlerror();
 	if(err) 
 		{
@@ -452,7 +452,7 @@ int openLib(char *string_lib)
 			return -1;
 		}
 		
-	setopt = (setoptFunction) dlsym(lib,"setoption");
+	setopt = (setoptFunction) dlsym(distancelib,"setoption");
 	err=dlerror();
 	if(err) 
 		{
@@ -597,7 +597,7 @@ int main(int argc, char *argv[] )
 	}
 
 	mysql_close(connread);
-    dlclose(lib);
+    dlclose(distancelib);
     return(0);
 }
 
