@@ -14,7 +14,7 @@ const char * err;
 float ncd, dncd;
 ssize_t offset = 10;
 
-lib = dlopen("libncd.so.1.0", RTLD_NOW);
+lib = dlopen("/usr/local/lib/libncd.so.1.0", RTLD_NOW);
 if(!lib)
 	{
 		printf("Failed to open: %s\n",dlerror());

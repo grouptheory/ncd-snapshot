@@ -1,13 +1,13 @@
 CC = gcc
-#LIBS = -lm -lzip
-LIBS = -lm -L/usr/bin -lcygz
+LIBS = -lm -lzip
+#LIBS = -lm -L/usr/bin -lcygz
 
 #DEFINES = -DDEFAULT_USER=\"snapshot\" -DDEFAULT_PASS=\"snapshot\" -DNOSPIN
 
 all: libncd test
 
 test:
-	$(CC) -rdynamic  test.c -o test
+	$(CC) -rdynamic -ldl  test.c -o test
 #	$(LIBS) $(DEFINES)
 
 
@@ -17,7 +17,12 @@ libncd:
 
 #$(LIBS) $(DEFINES)
 
+install:
+	cp libncd.so.* /usr/local/lib
+	ldconfig
+
 clean:
 	rm *.o
-	rm *.exe
+	rm test
+	rm libncd.so.1.0
 	rm *.so.*
