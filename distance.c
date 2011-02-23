@@ -433,12 +433,12 @@ void printhelp()
 
 int openLib(char *string_lib)
 {
-
+	char *err;
 	dlclose(distancelib);
 	dlerror();
 	
 	distancelib = dlopen(string_lib, RTLD_NOW);
-	if(!lib)
+	if(!distancelib)
 		{
 			printf("Failed to open %d: %s\n",string_lib, dlerror());
 			return -1;
@@ -553,7 +553,7 @@ int main(int argc, char *argv[] )
 			  if(temp_int < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
 			break;
 			case 'D' :
-				if(libopen > 0) setopt("DOUBLE", 1);
+				if(libopen > 0) setopt("DOUBLE", (void *)1);
 			  break;
 			case 'o' :
 			  if(libopen > 0) setopt("RANDOM_OFFSET", (void *)1);
@@ -561,7 +561,7 @@ int main(int argc, char *argv[] )
 			case 'T' :
 				strncpy(tempstring,optarg,19);
 				temp_int = atoi(tempstring);
-				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (void *)temp_int;
+				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (void *)temp_int);
 				if(temp_int < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
 			break;
 			case 'k' :
