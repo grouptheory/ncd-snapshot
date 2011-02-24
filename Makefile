@@ -25,7 +25,7 @@ collaboration:
 	$(CC)  collaboration.c mysql.c -o collaboration $(LIBS) $(DEFINES)
 
 collaboration-csv:
-	$(CC)  collaboration-csv.c mysql.c -o collaboration-csv -pthread $(LIBS) $(DEFINES)
+	$(CC)  collaboration-csv.c mysql.c -o collaboration-graphing/collaboration-csv -pthread $(LIBS) $(DEFINES)
 
 anomaly-curve:
 	$(CC)  anomaly-curve.c mysql.c -o anomaly-curve $(LIBS) $(DEFINES)
@@ -42,5 +42,5 @@ clean:
 	rm collaboration
 	rm anomaly-curve
 	rm company
-	rm collaboration-csv
+	rm ./collaboration-graphing/collaboration-csv
 	rm distance
