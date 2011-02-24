@@ -480,15 +480,12 @@ int main(int argc, char *argv[] )
 			}
 			if(check == 1) 
 			{
-				for(z=0; z < ARRAYSIZE_TIME; z++)
-				{
-					//print values
-					if(first == 0) { fprintf(outvcsv,"%f",array[x][y][z]);; first = 1; }
-					else { fprintf(outvcsv,", %f",array[x][y][z]);  }
-				}
-				fprintf(outvcsv,"\n");
+				//print values
+				if(first == 0) { fprintf(outvcsv,"%f",array[x][y][z]);; first = 1; }
+				else { fprintf(outvcsv,", %f",array[x][y][z]);  }
 			}
 		}
+		fprintf(outvcsv,"\n");
 	}
     //Sql End
 	fclose(outvcsv);
