@@ -508,10 +508,10 @@ int main(int argc, char *argv[] )
 			if(check == 1) 
 			{
 				if(q==1) snprintf(tempbuffer,BIGBUFFER,"name=%d-%d ",x,y); 
-				else snprintf(tempbuffer,BIGBUFFER,"name%d=%d-%d "q,x,y); 
+				else snprintf(tempbuffer,BIGBUFFER,"name%d=%d-%d ",q,x,y); 
 				strncat(plotNamebuffer, tempbuffer, BIGBUFFER);
 				if(q==1) snprintf(tempbuffer,BIGBUFFER,"y=%d-%d ",x,y); 
-				else snprintf(tempbuffer,BIGBUFFER,"y%d=%d-%d "q,x,y); 
+				else snprintf(tempbuffer,BIGBUFFER,"y%d=%d-%d ",q,x,y); 
 				strncat(plotYbuffer, tempbuffer, BIGBUFFER);
 				q++;
 			}
