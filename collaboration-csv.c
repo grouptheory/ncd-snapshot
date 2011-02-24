@@ -264,6 +264,9 @@ int main(int argc, char *argv[] )
     int limit_value = 0;
 	int x,y,z,q, check,first;
     char sqlbuffer[BIGBUFFER];
+	char tempbuffer[BIGBUFFER];
+	char plotYbuffer[BIGBUFFER];
+	char plotNamebuffer[BIGBUFFER];
 	char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
   	int min, max, total, start, end, modulus;
 	int thread_count = GLOBAL_THREADS;
@@ -347,6 +350,8 @@ int main(int argc, char *argv[] )
 	if( (outhcsv= fopen("output-h.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-h.csv"); }
 	FILE *outvcsv;
 	if( (outvcsv= fopen("output-v.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-v.csv"); }
+	FILE *plotdata;
+	if( (plotdata= fopen("ploticus-options", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","ploticus-options"); }
 	sigset_t myset;
 	sigfillset(&myset);
 	sigdelset(&myset, SIGTERM);
@@ -445,7 +450,6 @@ int main(int argc, char *argv[] )
 		}
 	//Vertical Output
 	//Header
-
 	fprintf(outvcsv,"#, ");
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
@@ -467,7 +471,7 @@ int main(int argc, char *argv[] )
 	//Data
 	for(z=0; z < ARRAYSIZE_TIME; z++) 
 	{
-		fprintf(outvcsv,"%d, ", z);
+		fprintf(outvcsv,"%d, ", (z+1));
 		for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -486,9 +490,38 @@ int main(int argc, char *argv[] )
 		}
 		fprintf(outvcsv,"\n");
 	}
+	
+	//Ploticus parameters
+	q=1;
+	sprintf(plotYbuffer,"x=1 ");
+	sprintf(plotNamebuffer,"");
+	for(x =0; x < ARRAYSIZE_IMAGES; x++)
+		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		{
+			//Print Pair
+			check = 0;
+			for(z=0; z < ARRAYSIZE_TIME; z++) 
+			{
+				//Check for anything
+				if(array[x][y][z] != 0) check = 1;			
+			}
+			if(check == 1) 
+			{
+				if(q==1) snprintf(tempbuffer,BIGBUFFER,"name=%d-%d ",x,y); 
+				else snprintf(tempbuffer,BIGBUFFER,"name%d=%d-%d "q,x,y); 
+				strncat(plotNamebuffer, tempbuffer, BIGBUFFER);
+				if(q==1) snprintf(tempbuffer,BIGBUFFER,"y=%d-%d ",x,y); 
+				else snprintf(tempbuffer,BIGBUFFER,"y%d=%d-%d "q,x,y); 
+				strncat(plotYbuffer, tempbuffer, BIGBUFFER);
+				q++;
+			}
+		}
+	fprintf(plotdata,"%s %s", plotYbuffer, plotNamebuffer);
+	
     //Sql End
 	fclose(outvcsv);
 	fclose(outhcsv);
+	fclose(plotdata);
    mysql_close(conn);
     return(0);
 }
