@@ -450,7 +450,7 @@ int main(int argc, char *argv[] )
 		}
 	//Vertical Output
 	//Header
-	fprintf(outvcsv,"#, ");
+	fprintf(outvcsv,"#");
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -471,7 +471,7 @@ int main(int argc, char *argv[] )
 	//Data
 	for(z=0; z < ARRAYSIZE_TIME; z++) 
 	{
-		fprintf(outvcsv,"%d, ", (z+1));
+		fprintf(outvcsv,"%d", (z+1));
 		for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -510,8 +510,8 @@ int main(int argc, char *argv[] )
 				if(q==1) snprintf(tempbuffer,BIGBUFFER,"name=%d-%d ",x,y); 
 				else snprintf(tempbuffer,BIGBUFFER,"name%d=%d-%d ",q,x,y); 
 				strncat(plotNamebuffer, tempbuffer, BIGBUFFER);
-				if(q==1) snprintf(tempbuffer,BIGBUFFER,"y=%d-%d ",x,y); 
-				else snprintf(tempbuffer,BIGBUFFER,"y%d=%d-%d ",q,x,y); 
+				if(q==1) snprintf(tempbuffer,BIGBUFFER,"y=%d ",q+1); 
+				else snprintf(tempbuffer,BIGBUFFER,"y%d=%d ",q,q+1); 
 				strncat(plotYbuffer, tempbuffer, BIGBUFFER);
 				q++;
 			}
