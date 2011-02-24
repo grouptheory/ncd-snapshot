@@ -344,9 +344,9 @@ int main(int argc, char *argv[] )
 	if(user_name == NULL) user_name = DEFAULT_USER;
 	
 	FILE *outhcsv;
-	if( (outcsv= fopen("output-h.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-h.csv"); }
+	if( (outhcsv= fopen("output-h.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-h.csv"); }
 	FILE *outvcsv;
-	if( (outcsv= fopen("output-v.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-v.csv"); }
+	if( (outvcsv= fopen("output-v.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-v.csv"); }
 	sigset_t myset;
 	sigfillset(&myset);
 	sigdelset(&myset, SIGTERM);
