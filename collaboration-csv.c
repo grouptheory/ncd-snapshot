@@ -462,7 +462,7 @@ int main(int argc, char *argv[] )
 				else { fprintf(outvcsv,", %d-%d",x,y);  }
 			}
 		}
-	fprintf(outcsv,"\n");
+	fprintf(outvcsv,"\n");
 	
 	//Data
 	for(z=0; z < ARRAYSIZE_TIME; z++) 
