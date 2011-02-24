@@ -1,3 +1,4 @@
+//Rich
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,13 +8,11 @@
 #include <mysql/mysql.h>
 //#include <mysql/my_sys.h>
 #include <getopt.h>
+#include <zlib.h>
+#include <math.h>
 #include <pthread.h>
-#include <dlfcn.h>
+
 #include "mysql.h"
-
-#define DEFAULT_DISTANCE_LIB "/usr/local/lib/libncd.so.1.0"
-
-
 #define BIGBUFFER 10000
 #define PASS_SIZE 100
 #define db_name "SNAPSHOT"
@@ -36,31 +35,34 @@
 
 
 void initTables(MYSQL *);
-void ncdsnapshot(MYSQL *, int);
+void ncdsnapshot(MYSQL *, int, int, ssize_t);
+int compressSize(char *, ssize_t *, ssize_t *, ssize_t *, int , int, ssize_t );
+int combineSize(char *, char *, ssize_t *, ssize_t *, ssize_t *, int , int, ssize_t );
+void NCDtwofiles(char *, char *, int , int, ssize_t, float *, float * );
+void NCDtwofilesRand(char *, char *, int, int, int, float *, float *);
 int checkfile(const char *);
 void printhelp();
+ssize_t getFileSize(char *);
 void showTableQuery(MYSQL *, int, int);
 int pickSerial(MYSQL *);
 void * ncdThread(void *);
-
-//ProtoTypes for dynamic linking
-typedef void (*distanceFunction)(char *, char *, float *, float *);
-typedef void (*setoptFunction)(char *, void *);
-distanceFunction distance;
-setoptFunction setopt;
-void *distancelib;
 
 //Flags
 int GLOB_INIT_FLAG = 0; //Initialize Tables - Default NO
 int GLOBAL_VERBOSE = DVERBOSE;
 int GLOBAL_SHOWMATCHING = 0;
+int GLOBAL_SECONDSTAGE = 0;
+int GLOBAL_DOUBLE = 0;
+int GLOBAL_CVSOUT = 0;
 float GLOBAL_BASE = 0;
+int GLOBAL_RANDOM = 0;
+int GLOBAL_RANDOMK = 0;
 int GLOBAL_SHOWOUT = 0;
 int GLOBAL_COMPARE = 0;
 int GLOBAL_NEWQUERY = 0;
 int GLOBAL_THREADS = 4;
 int GLOBAL_SKIPDEL = 0;
-
+int TINY_CHUNK = DEFAULT_TINYCHUNK;
 
 char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 
@@ -76,12 +78,201 @@ char *socket_name = NULL;
 struct storage_struct {
 	long int min;
 	long int max;
+	int chunk;
+	ssize_t offset;
 	pthread_t TID; //thread ID
 };
 
 
 
-void ncdsnapshot(MYSQL *connread, int query_num)
+int compressSize(char *file, ssize_t *osize, ssize_t *csize, ssize_t *dsize, int level, int CHUNK, ssize_t offset)
+{
+	int ret,bound;
+	unsigned long size;
+	Bytef input[CHUNK];
+	Bytef *output;
+	FILE *source;
+	
+	if( (source = fopen(file, "rb")) == NULL) return Z_ERRNO;
+	
+	if(offset > 0) if( (fseek(source, offset, SEEK_SET)) != 0) {fprintf(stderr,"Error seeking file %s.\n",file); exit(1);}
+	
+	*osize = fread(input, 1, CHUNK, source);
+	if (ferror(source)) 
+	{
+	    return Z_ERRNO;
+	}
+
+	
+	size = compressBound(*osize);
+	output = malloc(sizeof(Bytef)*size);
+	ret = compress2(output, &size, input, *osize, level);
+	*csize =size;
+
+	//Optional Stage Two
+	if(GLOBAL_DOUBLE == 1)
+	{
+	  Bytef *secondoutput;
+	  size = compressBound(*csize);
+	  if(TINY_CHUNK <  *csize) *csize = TINY_CHUNK;
+	  secondoutput = malloc(sizeof(Bytef)*size);
+	  ret = compress2(secondoutput, &size, output, *csize, level);
+	  *dsize = size;
+	  free(secondoutput);
+	}
+	
+	free(output);
+	fclose(source);
+    return Z_OK;
+}//compressSize
+
+int combineSize(char *file, char *filetwo, ssize_t *osize, ssize_t *csize, ssize_t *dsize, int level, int CHUNK, ssize_t offset)
+{
+	int ret,bound;
+	unsigned long size;
+	Bytef input[CHUNK*2];
+
+	Bytef *output;
+	FILE *source;
+	FILE *sourcetwo;
+	ssize_t firstsize;
+	
+	if( (source = fopen(file, "rb")) == NULL) return Z_ERRNO;
+	if(offset > 0) if( (fseek(source, offset, SEEK_SET)) != 0) {fprintf(stderr,"Error seeking file %s.\n",file); exit(1);}
+	firstsize = fread(input, 1, CHUNK, source);
+	if (ferror(source)) {
+	    return Z_ERRNO;
+	}
+	fclose(source);
+	
+	if( (sourcetwo = fopen(filetwo, "rb")) == NULL) return Z_ERRNO;
+	if(offset > 0) if( (fseek(sourcetwo, offset, SEEK_SET)) != 0) {fprintf(stderr,"Error seeking file %s.\n",file); exit(1);}
+	*osize = fread( &input[firstsize], 1, CHUNK, source);
+	if (ferror(source)) {
+	    return Z_ERRNO;
+	}
+	*osize = *osize + firstsize;
+	fclose(sourcetwo);
+	
+	size = compressBound(*osize);
+	output = malloc(sizeof(Bytef)*size);
+	ret = compress2(output, &size, input, *osize, level);
+	*csize =size;
+	
+	//Optional Stage Two
+	if(GLOBAL_DOUBLE == 1)
+	{
+	  Bytef *secondoutput;
+	  size = compressBound(*csize);
+	  if(TINY_CHUNK <  *csize) *csize = TINY_CHUNK;
+	  secondoutput = malloc(sizeof(Bytef)*size);
+	  ret = compress2(secondoutput, &size, output, *csize, level);
+	  *dsize = size;
+	  free(secondoutput);
+	}
+
+    free(output);
+    return Z_OK;
+}//compressSize
+
+/*
+NCD Formula
+NCD(x,y)  =  C(xy) - min{C(x), C(y)} / max{C(x), C(y)},  
+*/
+void NCDtwofiles(char *file1, char *file2, int type, int CHUNK, ssize_t offset, float *ncd, float *dncd)
+{
+	ssize_t compressfile1, compressfile2, combined;
+	ssize_t dcompressfile1, dcompressfile2, dcombined;
+	ssize_t original;
+	ssize_t *min;
+	ssize_t *max;
+	compressSize(file1, &original, &compressfile1, &dcompressfile1, type, CHUNK, offset);
+	compressSize(file2, &original, &compressfile2, &dcompressfile2, type, CHUNK, offset);
+	combineSize(file1, file2, &original, &combined, &dcombined, type, CHUNK, offset);
+	
+	min = compressfile1 <= compressfile2 ? &compressfile1 : &compressfile2;
+	max = compressfile1 >= compressfile2 ? &compressfile1 : &compressfile2;	
+	*ncd = ( (float)(combined - *min) / (float)*max);
+	
+	if(GLOBAL_DOUBLE == 1)
+	{
+		min = dcompressfile1 <= dcompressfile2 ? &dcompressfile1 : &dcompressfile2;
+		max = dcompressfile1 >= dcompressfile2 ? &dcompressfile1 : &dcompressfile2;	
+		*dncd = ( (float)(dcombined - *min) / (float)*max);
+	}
+	else *dncd = 0;
+
+}
+
+/*
+Open File Seek to End and Return location
+
+*/
+ssize_t getFileSize(char *filename)
+{
+   int fd;
+   ssize_t offset;
+   if( (fd = open(filename, O_RDONLY)) == -1 ) {fprintf(stderr,"Error opening original file %s (Not Fatal - Will try to skip it)\n",filename); return 0;}
+   offset = lseek(fd, 0, SEEK_END);
+   if(offset == -1) {fprintf(stderr,"Error seeking file %s.\n",filename); exit(1);}
+   close(fd);
+   return offset;
+}
+
+
+/*
+NCD Formula
+NCD(x,y)  =  C(xy) - min{C(x), C(y)} / max{C(x), C(y)},  
+
+This function does not look at the first byes of a file but instead randomly checks a different position in a file.
+This can also be looped and the results added together.
+
+*/
+void NCDtwofilesRand(char *file1, char *file2, int type, int CHUNK, int rotation, float *ncd, float *dncd)
+{
+	ssize_t compressfile1, compressfile2, combined;
+	ssize_t dcompressfile1, dcompressfile2, dcombined;
+	ssize_t original;
+	ssize_t *min;
+	ssize_t *max;
+	ssize_t maxfile,maxfilesize,offset;
+	int count = 0;
+	
+	maxfile = getFileSize(file1);
+	maxfilesize = getFileSize(file2);
+	maxfilesize = maxfile < maxfilesize ? maxfile : maxfilesize;
+	//This check and sentinel value should be okay since we shouldn't have a negative NCD value. Code below will ignore this value.
+	if(maxfilesize == 0) *ncd = -999;
+	else
+	{
+		maxfilesize -= CHUNK;
+		
+		//will run once if rotation is 0 or 1
+		do
+		{
+			offset = ((((double)rand()) / ((double)(RAND_MAX) + (double)1))*maxfilesize);
+		  
+			compressSize(file1, &original, &compressfile1, &dcompressfile1, type, CHUNK, offset);
+			compressSize(file2, &original, &compressfile2, &dcompressfile2, type, CHUNK, offset);
+			combineSize(file1, file2, &original, &combined, &dcombined, type, CHUNK, offset);
+
+			min = compressfile1 <= compressfile2 ? &compressfile1 : &compressfile2;
+			max = compressfile1 >= compressfile2 ? &compressfile1 : &compressfile2;	 
+			*ncd = *ncd + ( (float)(combined - *min) / (float)*max);
+			if(GLOBAL_DOUBLE == 1)
+			{
+				min = dcompressfile1 <= dcompressfile2 ? &dcompressfile1 : &dcompressfile2;
+				max = dcompressfile1 >= dcompressfile2 ? &dcompressfile1 : &dcompressfile2;	
+				*dncd = *dncd + ( (float)(dcombined - *min) / (float)*max);
+			}
+			else *dncd = 0;
+			count++;
+		}
+		while(count < rotation);
+	}
+}//Two File NCD w/ random location
+
+void ncdsnapshot(MYSQL *connread, int query_num, int chunk, ssize_t offset)
 {
 
 	char sqlbuffer[BIGBUFFER+2];
@@ -122,7 +313,15 @@ void ncdsnapshot(MYSQL *connread, int query_num)
 	if(total == 0) { fprintf(stderr,"Nothing to compute NCD on!\n"); exit(1); }
 	while( (row = mysql_fetch_row(res)) != NULL);
 	
-
+	//Create Threat Structures
+	for(c = 0; c < GLOBAL_THREADS; c++)
+	{
+		//Fill in the blanks
+		thread_storage[c].chunk = chunk;
+		thread_storage[c].offset = offset;
+		
+	} //Fill in the blanks
+	
 
 	//Fill in Min/Max
 	for(c = 0; c < GLOBAL_THREADS; c++)
@@ -208,11 +407,27 @@ void * ncdThread(void *parm)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
 	
+	/*while( (row = mysql_fetch_row(res)) != NULL)
+	{
+		ncd = 0; dncd =0;
+		if(GLOBAL_RANDOM == 0)
+			NCDtwofiles(row[1], row[2], Z_DEFAULT_COMPRESSION, data->chunk, data->offset, &ncd, &dncd);
+		else 
+			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
+	    if (ncd == -999) continue; //skip if we had an error
+	    snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\");", NCD_RESULT_TABLENAME, row[0], ncd, dncd);
+		if (mysql_query(connwrite,second_sqlbuffer) != 0)
+			mysql_print_error(connwrite);		
+	 }
+	 */
 	 
 	while( (row = mysql_fetch_row(res)) != NULL)
 	{
 		ncd = 0; dncd =0;
-		distance(row[1], row[2], &ncd, &dncd);
+		if(GLOBAL_RANDOM == 0)
+			NCDtwofiles(row[1], row[2], Z_DEFAULT_COMPRESSION, data->chunk, data->offset, &ncd, &dncd);
+		else 
+			NCDtwofilesRand(file_one, file_two, Z_DEFAULT_COMPRESSION, data->chunk, GLOBAL_RANDOMK, &ncd, &dncd);
 	    if (ncd == -999) continue; //skip if we had an error
 		
 		if(insertcount == 0) { snprintf(second_sqlbuffer, BIGBUFFER, "INSERT INTO %s VALUES (\"%s\", \"%f\", \"%f\") ", NCD_RESULT_TABLENAME, row[0], ncd, dncd); insertcount++;}
@@ -413,11 +628,10 @@ void printhelp()
     printf("\t-f, --file=name\t Insted of MySQL - Dumps Insert statements into file: name\n");
     printf("\t-Q, --query-num\t Query number to use.\n");
 	printf("\t-q, --query\t	Use the last query created.\n");
-    printf("\t-w, --show\t Show Table when completed\n");
+    printf("\t-w, --show\t Show NCD Table when completed\n");
     printf("\t-l, --limit\t Limit the output of the show command.\n");
 	printf("\t-A, --threads\t Change number of threAds to use.\n");
-    printf("\t-N, --nodelete\t Skips the removal of previous Values.\n");
-	printf("\t-L, --library\t Change distance library.\n");
+    printf("\t-N, --nodelete\t Skips the removal of previous NCD Values.\n");
 	printf("\t\t\t NCD Options\n");
     printf("\t-c, --chunk\t The value of bytes that we check,\n\t\t\t Default is currently set to: %d\n",DEFAULT_CHUNK);
     printf("\t-o, --random\t Use a random offset to compare.\n");
@@ -431,63 +645,38 @@ void printhelp()
   
 }
 
-int openLib(char *string_lib)
-{
-	char *err;
-	//dlclose(distancelib);
-	dlerror();
-	
-	distancelib = dlopen(string_lib, RTLD_NOW);
-	if(!distancelib)
-		{
-			printf("Failed to open %d: %s\n",string_lib, dlerror());
-			return -1;
-		}
-	dlerror();
-	distance = (distanceFunction) dlsym(distancelib,"distanceFunction");
-	err=dlerror();
-	if(err) 
-		{
-			printf("Failed to locate distanceFunction: %s\n",dlerror());
-			return -1;
-		}
-		
-	setopt = (setoptFunction) dlsym(distancelib,"setoption");
-	err=dlerror();
-	if(err) 
-		{
-			printf("Failed to locate setoption: %s\n",dlerror());
-			return -1;
-		}
-	return 1;
-}
-
 int main(int argc, char *argv[] )
 {
   
-    char tempstring[PATH_MAX+1];
+    struct dirDFS *directory;
+	char cfilename[PATH_MAX+1];
+    char tempstring[20];
     int input,option_index,key;
+    char scandir[PATH_MAX+1];
     FILE *fileoutput = NULL;
+    char OUTPUT_PATH[PATH_MAX+1];
     MYSQL *connread = NULL;
     MYSQL *connwrite = NULL;
 	char *query_number = NULL;
 	int query_num = 0;
     int limit_value = 0;
-    int temp_int = 0;
+    int krepeat = 0;
 	int item_num;
-    int libopen = -1;
+    int chunk = DEFAULT_CHUNK;
     ssize_t offset = 0;
-
+ 
+    
+    
+    //Setup For OpenSSL Hash
+    OpenSSL_add_all_digests();
+    
     //Setup for MySQL Init File
     my_init();
     
-	libopen = openLib(DEFAULT_DISTANCE_LIB);
-	if(libopen == - 1) printf("Warning: Failed to open default distance library: %s\n", DEFAULT_DISTANCE_LIB);
-	
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
     
-    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:NL:", long_options, &option_index)) != EOF )
+    while((input = getopt_long(argc, argv, "hH:u:Q:qp:P:S:Dc:O:owl:T:k:A:N", long_options, &option_index)) != EOF )
     {
       switch(input)
       {
@@ -519,9 +708,30 @@ int main(int argc, char *argv[] )
 			case 'S' :
 			  socket_name = optarg;  
 			  break;
+			case 'D' :
+			  GLOBAL_DOUBLE = 1;
+			  break;
 			case 'N' :
 			  GLOBAL_SKIPDEL = 1;
-			  break;		
+			  break;			  
+			case 'c' :
+			  strncpy(tempstring,optarg,19);
+			  chunk = atoi(tempstring);
+			  if(chunk < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+			break;
+			case 'A' :
+			  strncpy(tempstring,optarg,19);
+			  GLOBAL_THREADS = atoi(tempstring);
+			  if(GLOBAL_THREADS < 1) { fprintf(stdout,"You need at least 1 thread! Setting to default.\n"); GLOBAL_THREADS = 4; }
+			break;
+			case 'O' :
+			  strncpy(tempstring,optarg,19);
+			  offset = atoi(tempstring);
+			  if(offset < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
+			break;
+			case 'o' :
+			  GLOBAL_RANDOM = 1;
+			break;
 			case 'w' :
 			  GLOBAL_SHOWOUT = 1;
 			break;
@@ -529,46 +739,17 @@ int main(int argc, char *argv[] )
 			  strncpy(tempstring,optarg,19);
 			 limit_value = atoi(tempstring);
 			  if(limit_value < 0) { fprintf(stdout,"Bad limit value entered.\n"); exit(1); }
-			break;			  
-			case 'A' :
-			  strncpy(tempstring,optarg,19);
-			  GLOBAL_THREADS = atoi(tempstring);
-			  if(GLOBAL_THREADS < 1) { fprintf(stdout,"You need at least 1 thread! Setting to default.\n"); GLOBAL_THREADS = 4; }
-			break;
-			case 'L' :
-			  strncpy(tempstring,optarg,PATH_MAX);
-			  openLib(tempstring);
-			break;		
-			case 'c' :
-			  strncpy(tempstring,optarg,19);
-			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("CHUNK_SIZE", (void *)temp_int);
-			  if(temp_int < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			break;
-
-			case 'O' :
-			  strncpy(tempstring,optarg,19);
-			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("OFFSET", (void *) temp_int);
-			  if(temp_int < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
-			break;
-			case 'D' :
-				if(libopen > 0) setopt("DOUBLE", (void *)1);
-			  break;
-			case 'o' :
-			  if(libopen > 0) setopt("RANDOM_OFFSET", (void *)1);
 			break;
 			case 'T' :
 				strncpy(tempstring,optarg,19);
-				temp_int = atoi(tempstring);
-				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (void *)temp_int);
-				if(temp_int < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
+				TINY_CHUNK = atoi(tempstring);
+				if(TINY_CHUNK < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
 			break;
 			case 'k' :
 			  strncpy(tempstring,optarg,19);
-			  temp_int = atoi(tempstring);
-			  if(temp_int < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			  if(libopen > 0) setopt("RANDOM_K", (void *) temp_int);
+			  GLOBAL_RANDOMK = atoi(tempstring);
+			  if(krepeat < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
+			  GLOBAL_RANDOMK = krepeat;
 			break;
 				  
 		}//switch      
@@ -581,15 +762,13 @@ int main(int argc, char *argv[] )
 	if(password == NULL) password = DEFAULT_PASS;
 	if(user_name == NULL) user_name = DEFAULT_USER;
     
-	if(libopen < 0) { printf("Failed to open a library after going over all the options. Must fail. So sorry...\n"); exit(1); }
-	
 	connread = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 
 	query_num = pickQuery(connread, query_number);
 
 	if(query_num > 0)
 	{
-		ncdsnapshot(connread, query_num);
+		ncdsnapshot(connread, query_num, chunk, offset);
 		if(GLOBAL_SHOWOUT == 1)
 		{
 			showTableQuery(connread, query_num, limit_value);
@@ -597,7 +776,7 @@ int main(int argc, char *argv[] )
 	}
 
 	mysql_close(connread);
-    dlclose(distancelib);
+    
     return(0);
 }
 
