@@ -2,7 +2,7 @@
 if [ -z "$1" ]; then
         echo usage: $0 SEEDX SEEDY
         exit
-
+#
 TOTAL=1000
 NAME="duration"
 DIR="/home/ralcalde/Code/ncd-snapshot/test/"
