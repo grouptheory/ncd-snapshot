@@ -12,7 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define ARRAYSIZE_TIME 100
+#define ARRAYSIZE_TIME 10
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
@@ -262,7 +262,7 @@ int main(int argc, char *argv[] )
     int input,option_index,key;
     FILE *fileoutput = NULL;
     int limit_value = 0;
-	int x,y,z, check;
+	int x,y,z,q, check,first;
     char sqlbuffer[BIGBUFFER];
 	char passbuffer[PASS_SIZE]; // Just in case we want a NULL Password parm - create a buffer to point to
   	int min, max, total, start, end, modulus;
@@ -343,9 +343,10 @@ int main(int argc, char *argv[] )
 	if(password == NULL) password = DEFAULT_PASS;
 	if(user_name == NULL) user_name = DEFAULT_USER;
 	
-	FILE *outcsv;
-	if( (outcsv= fopen("output.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output.csv"); }
-	
+	FILE *outhcsv;
+	if( (outcsv= fopen("output-h.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-h.csv"); }
+	FILE *outvcsv;
+	if( (outcsv= fopen("output-v.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-v.csv"); }
 	sigset_t myset;
 	sigfillset(&myset);
 	sigdelset(&myset, SIGTERM);
@@ -420,7 +421,7 @@ int main(int argc, char *argv[] )
 	
 	//Output to file
 	fprintf(stderr,"Writting file.\n");
-	
+	//Horizontal output
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -433,18 +434,65 @@ int main(int argc, char *argv[] )
 			}
 			if(check == 1) 
 			{
-				fprintf(outcsv,"%d, %d",x,y);
+				fprintf(outhcsv,"%d, %d",x,y);
 				for(z=0; z < ARRAYSIZE_TIME; z++)
 				{
 					//print values
-					fprintf(outcsv,", %f",array[x][y][z]);
+					fprintf(outhcsv,", %f",array[x][y][z]);
 				}
-				fprintf(outcsv,"\n");
+				fprintf(outhcsv,"\n");
 			}
 		}
+	//Vertical Output
+	//Header
+	first = 0;
+	for(x =0; x < ARRAYSIZE_IMAGES; x++)
+		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		{
+			//Print Pair
+			check = 0;
+			for(z=0; z < ARRAYSIZE_TIME; z++) 
+			{
+				//Check for anything
+				if(array[x][y][z] != 0) check = 1;			
+			}
+			if(check == 1) 
+			{
+				if(first == 0) { fprintf(outvcsv,"%d-%d",x,y); first = 1; }
+				else { fprintf(outvcsv,", %d-%d",x,y);  }
+			}
+		}
+	fprintf(outcsv,"\n");
 	
+	//Data
+	for(z=0; z < ARRAYSIZE_TIME; z++) 
+	{
+		first = 0;
+		for(x =0; x < ARRAYSIZE_IMAGES; x++)
+		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		{
+			//Print Pair
+			check = 0;
+			for(q=0; q < ARRAYSIZE_TIME; q++) 
+			{
+				//Check for anything
+				if(array[x][y][q] != 0) check = 1;			
+			}
+			if(check == 1) 
+			{
+				for(z=0; z < ARRAYSIZE_TIME; z++)
+				{
+					//print values
+					if(first == 0) { fprintf(outvcsv,"%f",array[x][y][z]);; first = 1; }
+					else { fprintf(outvcsv,", %f",array[x][y][z]);  }
+				}
+				fprintf(outvcsv,"\n");
+			}
+		}
+	}
     //Sql End
-	fclose(outcsv);
+	fclose(outvcsv);
+	fclose(outhcsv);
    mysql_close(conn);
     return(0);
 }
