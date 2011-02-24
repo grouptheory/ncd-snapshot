@@ -445,7 +445,8 @@ int main(int argc, char *argv[] )
 		}
 	//Vertical Output
 	//Header
-	first = 0;
+
+	fprintf(outvcsv,"#, ");
 	for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -458,8 +459,7 @@ int main(int argc, char *argv[] )
 			}
 			if(check == 1) 
 			{
-				if(first == 0) { fprintf(outvcsv,"%d-%d",x,y); first = 1; }
-				else { fprintf(outvcsv,", %d-%d",x,y);  }
+				fprintf(outvcsv,", %d-%d",x,y); 
 			}
 		}
 	fprintf(outvcsv,"\n");
@@ -467,7 +467,7 @@ int main(int argc, char *argv[] )
 	//Data
 	for(z=0; z < ARRAYSIZE_TIME; z++) 
 	{
-		first = 0;
+		fprintf(outvcsv,"%d, ", z);
 		for(x =0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
@@ -481,8 +481,7 @@ int main(int argc, char *argv[] )
 			if(check == 1) 
 			{
 				//print values
-				if(first == 0) { fprintf(outvcsv,"%f",array[x][y][z]);; first = 1; }
-				else { fprintf(outvcsv,", %f",array[x][y][z]);  }
+				fprintf(outvcsv,", %f",array[x][y][z]);
 			}
 		}
 		fprintf(outvcsv,"\n");
