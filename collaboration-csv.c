@@ -369,9 +369,9 @@ int main(int argc, char *argv[] )
    
 	//Setting up main array
 	printf("Setting up Array for %d Images and %d iterations.\n", ARRAYSIZE_IMAGES, ARRAYSIZE_TIME);
-	for(x =0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
-			for(z=0; z < ARRAYSIZE_TIME; z++)
+	for(x =0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
+			for(z=0; z =< ARRAYSIZE_TIME; z++)
 				array[x][y][z] = 0;
 	
 	//Get Data
@@ -433,12 +433,12 @@ int main(int argc, char *argv[] )
 	//Output to file
 	fprintf(stderr,"Writting file.\n");
 	//Horizontal output
-	for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+	for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(z=1; z < ARRAYSIZE_TIME; z++) 
+			for(z=1; z =< ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
 				if(array[x][y][z] != 0) check = 1;			
@@ -446,7 +446,7 @@ int main(int argc, char *argv[] )
 			if(check == 1) 
 			{
 				fprintf(outhcsv,"%d, %d",x,y);
-				for(z=1; z < ARRAYSIZE_TIME; z++)
+				for(z=1; z =< ARRAYSIZE_TIME; z++)
 				{
 					//print values
 					fprintf(outhcsv,", %f",array[x][y][z]);
@@ -457,12 +457,12 @@ int main(int argc, char *argv[] )
 	//Vertical Output
 	//Header
 	fprintf(outvcsv,"#");
-	for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+	for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(z=1; z < ARRAYSIZE_TIME; z++) 
+			for(z=1; z =< ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
 				if(array[x][y][z] != 0) check = 1;			
@@ -478,12 +478,12 @@ int main(int argc, char *argv[] )
 	for(z=1; z < ARRAYSIZE_TIME; z++) 
 	{
 		fprintf(outvcsv,"%d", (z+1));
-		for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(q=1; q < ARRAYSIZE_TIME; q++) 
+			for(q=1; q =< ARRAYSIZE_TIME; q++) 
 			{
 				//Check for anything
 				if(array[x][y][q] != 0) check = 1;			
@@ -501,12 +501,12 @@ int main(int argc, char *argv[] )
 	q=1;
 	sprintf(plotYbuffer,"x=1 ");
 	sprintf(plotNamebuffer,"");
-	for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+	for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(z=1; z < ARRAYSIZE_TIME; z++) 
+			for(z=1; z =< ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
 				if(array[x][y][z] != 0) check = 1;			
@@ -527,16 +527,16 @@ int main(int argc, char *argv[] )
 	//GnuPLOT  Commands
 	q=2;
 	fprintf(gnuplot,"set term png\n");
-	fprintf(gnuplot,"set output \"graphic.png\"");
+	fprintf(gnuplot,"set output \"graphic.png\"\n");
 	fprintf(gnuplot,"set xlabel 'Iterations'\n");
 	fprintf(gnuplot,"set ylabel 'NCD'\n");
 	fprintf(gnuplot,"set title 'Simulation'\n");
-	for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+	for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(z=1; z < ARRAYSIZE_TIME; z++) 
+			for(z=1; z =< ARRAYSIZE_TIME; z++) 
 			{
 				//Check for anything
 				if(array[x][y][z] != 0) check = 1;			
@@ -552,15 +552,15 @@ int main(int argc, char *argv[] )
 	fprintf(gnuplot,"quit\n");
 	
 	//GNU Data
-	for(z=1; z < ARRAYSIZE_TIME; z++) 
+	for(z=1; z =< ARRAYSIZE_TIME; z++) 
 	{
 		fprintf(gnuplotdata,"%d\t", z);
-		for(x=0; x < ARRAYSIZE_IMAGES; x++)
-		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		for(x=0; x =< ARRAYSIZE_IMAGES; x++)
+		for(y=0; y =< ARRAYSIZE_IMAGES; y++)
 		{
 			//Print Pair
 			check = 0;
-			for(q=1; q < ARRAYSIZE_TIME; q++) 
+			for(q=1; q =< ARRAYSIZE_TIME; q++) 
 			{
 				//Check for anything
 				if(array[x][y][q] != 0) check = 1;			
