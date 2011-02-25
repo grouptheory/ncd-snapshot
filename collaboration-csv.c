@@ -177,7 +177,7 @@ void getTabledata(MYSQL *connread, char *table, int limit_value, int time)
 		snprintf(sql_temp_buffer,buffersize," LIMIT %d ", limit_value);
 		strncat(sqlbuffer, sql_temp_buffer, buffersize);
 	}
-	
+	if(time == 0) fprintf(stderr,"WTF with Time!\n");
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
 	res = mysql_use_result(connread);
