@@ -12,7 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define ARRAYSIZE_TIME 10
+#define ARRAYSIZE_TIME 100
 #define ARRAYSIZE_IMAGES 20
 #define BIGBUFFER 10000
 #define sqlbufsize 255
