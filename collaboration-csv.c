@@ -354,9 +354,9 @@ int main(int argc, char *argv[] )
 	if( (plotdata= fopen("ploticus-options", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","ploticus-options"); }
 	
 	FILE *gnuplotdata;
-	if( (outgnuplotdata= fopen("plot.dat", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.dat"); }
+	if( (gnuplotdata= fopen("plot.dat", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.dat"); }
 	FILE *gnuplot;
-	if( (outgnuplot= fopen("plot.cmd", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.cmd"); }
+	if( (gnuplot= fopen("plot.cmd", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.cmd"); }
 	
 	sigset_t myset;
 	sigfillset(&myset);
@@ -571,8 +571,6 @@ int main(int argc, char *argv[] )
 		fprintf(gnuplotdata,"\n");
 	}
 	
-	
-	plot "test.out" using 1:4 title "1-4" with linespoints, "test.out" using 1:2 title "1-2" with linespoints 
     //Sql End
 	fclose(outvcsv);
 	fclose(outhcsv);
