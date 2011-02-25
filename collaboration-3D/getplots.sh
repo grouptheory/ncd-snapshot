@@ -22,4 +22,5 @@ done
 gnuplot < gnuplot.cmd
 
 mencoder "mf://*.jpg" -mf fps=10 -o simulation.avi -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=800 
+ffmpeg -r 10 -b 1800 -i graphic3d-iteration-%05d.jpg simulation.mp4
 
