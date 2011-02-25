@@ -529,7 +529,7 @@ int main(int argc, char *argv[] )
 	fprintf(gnuplot,"set term png\n");
 	fprintf(gnuplot,"set output \"graphic.png\"\n");
 	fprintf(gnuplot,"set xlabel 'Iterations'\n");
-	fprintf(gnuplot,"set ylabel 'NCD'\n");
+	fprintf(gnuplot,"set ylabel 'Collaboration'\n");
 	fprintf(gnuplot,"set title 'Simulation'\n");
 	for(x=0; x <= ARRAYSIZE_IMAGES; x++)
 		for(y=0; y <= ARRAYSIZE_IMAGES; y++)
