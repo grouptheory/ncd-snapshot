@@ -554,7 +554,7 @@ int main(int argc, char *argv[] )
 	//GNU Data
 	for(z=1; z < ARRAYSIZE_TIME; z++) 
 	{
-		fprintf(gnuplotdata,"%d\t", z;
+		fprintf(gnuplotdata,"%d\t", z);
 		for(x=0; x < ARRAYSIZE_IMAGES; x++)
 		for(y=0; y < ARRAYSIZE_IMAGES; y++)
 		{
