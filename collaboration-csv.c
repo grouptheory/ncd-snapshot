@@ -542,7 +542,7 @@ int main(int argc, char *argv[] )
 			if(check == 1) 
 			{
 				if(q==2) fprintf(gnuplot,"plot \"plot.dat\" using 1:%d title \"%d-%d\" with linespoints",q,x,y);
-				else fprintf(gnuplot,", plot \"plot.dat\" using 1:%d title \"%d-%d\" with linespoints",q,x,y); 
+				else fprintf(gnuplot,", \"plot.dat\" using 1:%d title \"%d-%d\" with linespoints",q,x,y); 
 				q++;
 			}
 		}
@@ -565,7 +565,7 @@ int main(int argc, char *argv[] )
 			if(check == 1) 
 			{
 				//print values
-				fprintf(gnuplotdata,"\t%f",array[x][y][z]);
+				fprintf(gnuplotdata,"%f\t",array[x][y][z]);
 			}
 		}
 		fprintf(gnuplotdata,"\n");
