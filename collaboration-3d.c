@@ -285,8 +285,7 @@ int main(int argc, char *argv[] )
 			SHOW_Start = 1;
 			break;	  
 		case 'Q' :
-		  query_number = optarg;
-		  	strncpy(tempstring,optarg,19);
+		   	strncpy(tempstring,optarg,19);
 			query_number = atoi(tempstring);
 			if(query_number <= 0) { fprintf(stdout,"Bad query value entered.\n"); exit(1); }
 		  break;
