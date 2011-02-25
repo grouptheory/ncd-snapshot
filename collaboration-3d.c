@@ -306,7 +306,7 @@ int main(int argc, char *argv[] )
 	
 	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(conn == NULL) { fprintf(stderr,"[Main] Error opening MySQL Connection.\n"); exit(1); }
-	initTables(conn, z);
+	initTables(conn, query_number);
 	getTabledata(conn, out3d, "Collaborative_Result_Temp", query_number);
 
 	fclose(out3d);
