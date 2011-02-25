@@ -352,6 +352,12 @@ int main(int argc, char *argv[] )
 	if( (outvcsv= fopen("output-v.csv", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","output-v.csv"); }
 	FILE *plotdata;
 	if( (plotdata= fopen("ploticus-options", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","ploticus-options"); }
+	
+	FILE *gnuplotdata;
+	if( (outgnuplotdata= fopen("plot.dat", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.dat"); }
+	FILE *gnuplot;
+	if( (outgnuplot= fopen("plot.cmd", "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n","plot.cmd"); }
+	
 	sigset_t myset;
 	sigfillset(&myset);
 	sigdelset(&myset, SIGTERM);
@@ -518,10 +524,61 @@ int main(int argc, char *argv[] )
 		}
 	fprintf(plotdata,"%s %s", plotYbuffer, plotNamebuffer);
 	
+	//GnuPLOT  Commands
+	q=2;
+	fprintf(gnuplot,"set xlabel 'Iterations'\n");
+	fprintf(gnuplot,"set ylabel 'NCD'\n");
+	fprintf(gnuplot,"set Title 'Simulation'\n");
+	for(x =0; x < ARRAYSIZE_IMAGES; x++)
+		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		{
+			//Print Pair
+			check = 0;
+			for(z=0; z < ARRAYSIZE_TIME; z++) 
+			{
+				//Check for anything
+				if(array[x][y][z] != 0) check = 1;			
+			}
+			if(check == 1) 
+			{
+				if(q==2) fprintf(gnuplot,"plot \"plot.dat\" using 1:%d title \"%d-%d\" with linespoints",q,x,y);
+				else fprintf(gnuplot,", plot \"plot.dat\" using 1:%d title \"%d-%d\" with linespoints",q,x,y); 
+				q++;
+			}
+		}
+	fprintf(gnuplot,"\n");
+	
+	//GNU Data
+	for(z=0; z < ARRAYSIZE_TIME; z++) 
+	{
+		fprintf(outvcsv,"%d", (z+1));
+		for(x =0; x < ARRAYSIZE_IMAGES; x++)
+		for(y=0; y < ARRAYSIZE_IMAGES; y++)
+		{
+			//Print Pair
+			check = 0;
+			for(q=0; q < ARRAYSIZE_TIME; q++) 
+			{
+				//Check for anything
+				if(array[x][y][q] != 0) check = 1;			
+			}
+			if(check == 1) 
+			{
+				//print values
+				fprintf(gnuplotdata,"\t%f",array[x][y][z]);
+			}
+		}
+		fprintf(gnuplotdata,"\n");
+	}
+	
+	
+	plot "test.out" using 1:4 title "1-4" with linespoints, "test.out" using 1:2 title "1-2" with linespoints 
     //Sql End
 	fclose(outvcsv);
 	fclose(outhcsv);
 	fclose(plotdata);
+	fclose(gnuplotdata);
+	fclose(gnuplot);
    mysql_close(conn);
     return(0);
 }
