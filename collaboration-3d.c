@@ -302,7 +302,7 @@ int main(int argc, char *argv[] )
 	if(user_name == NULL) user_name = DEFAULT_USER;
 	
 	FILE *out3d;
-	snprintf(filename,255,"plot3d-%d.dat",query_number);
+	snprintf(filename,255,"plot3d-%05d.dat",query_number);
 	if( (out3d= fopen(filename, "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n",filename); }
 
 	
