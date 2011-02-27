@@ -38,7 +38,7 @@ if(err)
 		exit(1);
 	}
 	
-setopt("OFFSET", offset);
+setopt("CHUNK_SIZE", 32000);
 
 distance("../company.c", "../distance.c", &ncd, &dncd);
 printf("NCD values %f %f\n", ncd, dncd);

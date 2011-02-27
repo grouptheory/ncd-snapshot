@@ -290,8 +290,7 @@ void distanceFunction(char *file1, char *file2, float *ncd, float *dncd)
 		if(GLOBAL_RANDOM == 0)
 			NCDtwofiles(file1, file2, GLOBAL_COMPRESSION, GLOBAL_CHUNK, GLOBAL_OFFSET, ncd, dncd);
 		else 
-			NCDtwofilesRand(file1, file2, Z_DEFAULT_COMPRESSION, GLOBAL_CHUNK, GLOBAL_RANDOMK, ncd, dncd);
-	    
+			NCDtwofilesRand(file1, file2, Z_DEFAULT_COMPRESSION, GLOBAL_CHUNK, GLOBAL_RANDOMK, ncd, dncd);	    
 }
 
 
