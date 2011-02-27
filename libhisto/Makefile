@@ -17,9 +17,9 @@ libhisto:
 
 #$(LIBS) $(DEFINES)
 
-#install:
-#	cp libncd.so.* /usr/local/lib
-#	ldconfig
+install:
+	cp libhistogram.so.* /usr/local/lib
+	ldconfig
 
 clean:
 	rm *.o

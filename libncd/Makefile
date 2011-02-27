@@ -23,6 +23,6 @@ install:
 
 clean:
 	rm *.o
+	rm *.so.1.0
 	rm test
-	rm libncd.so.1.0
-	rm *.so.*
+
