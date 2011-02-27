@@ -48,7 +48,7 @@ ssize_t GLOBAL_OFFSET = 0;
 
 
 
-int setoption(char *string, const void *option)
+int setoption(char *string, const long int option)
 {
 	char *sub_ptr;
 	int count;
@@ -65,28 +65,28 @@ int setoption(char *string, const void *option)
 					GLOBAL_OFFSET = (ssize_t) option;
 					break;
 				case D_COMPRESSION_TYPE :
-					if((ssize_t)option < 0) { return -1; }
-					GLOBAL_COMPRESSION = (int) option;
+					if(option < 0) { return -1; }
+					GLOBAL_COMPRESSION = option;
 					break;
 				case D_CHUNK_SIZE :
-					if((ssize_t)option < 0) { return -1; }
-					GLOBAL_CHUNK = (int) option;
+					if(option < 0) { return -1; }
+					GLOBAL_CHUNK = option;
 					break;
 				case D_RANDOM_OFFSET :
-					if((ssize_t)option < 0) { return -1; }
-					GLOBAL_RANDOM = (int) option;
+					if(option < 0) { return -1; }
+					GLOBAL_RANDOM = option;
 					break;
 				case D_DOUBLE :
-					if((ssize_t)option < 0) { return -1; }
-					GLOBAL_DOUBLE = (int) option;
+					if(option < 0) { return -1; }
+					GLOBAL_DOUBLE = option;
 					break;
 				case D_TINY_CHUNK_SIZE :
-					if((ssize_t)option < 0) { return -1; }
-					TINY_CHUNK = (int) option;
+					if(option < 0) { return -1; }
+					TINY_CHUNK = option;
 					break;		
 				case D_RANDOM_K :
-					if((ssize_t)option < 0) { return -1; }
-					GLOBAL_RANDOMK = (int) option;
+					if(option < 0) { return -1; }
+					GLOBAL_RANDOMK = option;
 					break;						
 			}
 			return 0;

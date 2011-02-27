@@ -45,7 +45,7 @@ void * ncdThread(void *);
 
 //ProtoTypes for dynamic linking
 typedef void (*distanceFunction)(char *, char *, float *, float *);
-typedef void (*setoptFunction)(char *, void *);
+typedef void (*setoptFunction)(char *, long int );
 distanceFunction distance;
 setoptFunction setopt;
 void *distancelib;
@@ -542,33 +542,33 @@ int main(int argc, char *argv[] )
 			case 'c' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("CHUNK_SIZE", (void *)temp_int);
+			  if(libopen > 0) setopt("CHUNK_SIZE", (long int) temp_int);
 			  if(temp_int < 8000) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
 			break;
 
 			case 'O' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
-			  if(libopen > 0) setopt("OFFSET", (void *) temp_int);
+			  if(libopen > 0) setopt("OFFSET", (long int) temp_int);
 			  if(temp_int < 0) { fprintf(stdout,"Bad offset value entered.\n"); exit(1); }
 			break;
 			case 'D' :
-				if(libopen > 0) setopt("DOUBLE", (void *)1);
+				if(libopen > 0) setopt("DOUBLE", (long int)1);
 			  break;
 			case 'o' :
-			  if(libopen > 0) setopt("RANDOM_OFFSET", (void *)1);
+			  if(libopen > 0) setopt("RANDOM_OFFSET", (long int)1);
 			break;
 			case 'T' :
 				strncpy(tempstring,optarg,19);
 				temp_int = atoi(tempstring);
-				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (void *)temp_int);
+				if(libopen > 0) setopt("TINY_CHUNK_SIZE", (long int)temp_int);
 				if(temp_int < 1000) { fprintf(stdout,"Bad tiny chunk value entered.\n"); exit(1); }
 			break;
 			case 'k' :
 			  strncpy(tempstring,optarg,19);
 			  temp_int = atoi(tempstring);
 			  if(temp_int < 0) { fprintf(stdout,"Bad value entered.\n"); exit(1); }
-			  if(libopen > 0) setopt("RANDOM_K", (void *) temp_int);
+			  if(libopen > 0) setopt("RANDOM_K", (long int) temp_int);
 			break;
 				  
 		}//switch      

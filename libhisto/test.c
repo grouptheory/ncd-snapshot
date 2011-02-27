@@ -12,9 +12,9 @@ distanceFunction distance;
 setoptFunction setopt;
 const char * err;
 float ncd, dncd;
-ssize_t offset = 10;
+ssize_t offset = 0;
 
-lib = dlopen("./libncd.so.1.0", RTLD_NOW);
+lib = dlopen("./libhistogram.so.1.0", RTLD_NOW);
 if(!lib)
 	{
 		printf("Failed to open: %s\n",dlerror());
@@ -38,9 +38,16 @@ if(err)
 		exit(1);
 	}
 	
-setopt("OFFSET", offset);
+setopt("OFFSET", (long int)offset);
+setopt("CHUNK_SIZE", (long int) 32000);
+
+distance("../company.c", "../company.c", &ncd, &dncd);
+printf("NCD values %f %f\n", ncd, dncd);
 
 distance("../company.c", "../distance.c", &ncd, &dncd);
+printf("NCD values %f %f\n", ncd, dncd);
+
+distance("../query.c", "../distance.c", &ncd, &dncd);
 printf("NCD values %f %f\n", ncd, dncd);
 
 dlclose(lib);
