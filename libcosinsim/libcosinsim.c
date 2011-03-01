@@ -172,7 +172,7 @@ int cosinsimFiles(char *file, char *filetwo, int CHUNK, ssize_t offset, float *d
 	
 	
 //	*distance = (float) numerator / ( Q_sqrt(denominator) * Q_sqrt(denominatortwo));	
-	*distance = (float) numerator / ( sqrt(denominator) * sqrt(denominatortwo));	
+	*distance = (float) numerator / sqrt(denominator * denominatortwo); //* sqrt(denominatortwo));	
 
 	return 0;
 }
