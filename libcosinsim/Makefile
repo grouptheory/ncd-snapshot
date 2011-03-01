@@ -12,7 +12,7 @@ test:
 
 
 libcosinsim:
-	$(CC)  -c -fPIC -lm libcosinsim.c 
+	$(CC)  -c -fPIC -mfpmath=sse -march=core2 -lm libcosinsim.c 
 	$(CC)  -shared -lm -Wl,-soname,libcosinsim.so.1 -o libcosinsim.so.1.0  libcosinsim.o
 
 #$(LIBS) $(DEFINES)
