@@ -313,7 +313,7 @@ int main(int argc, char *argv[] )
 	getTabledata(conn, outgraph, "Collaborative_Result_Temp", query_number);
 	fprintf(outgraph,"\n}\n");
 	
-	fclose(out3d);
+	fclose(outgraph);
 	mysql_close(conn);
     return(0);
 }
