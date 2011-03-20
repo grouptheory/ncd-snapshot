@@ -277,8 +277,8 @@ void BFS(int **connections, int image_count)
 {
 
 	int v_start,v,u,x,y, distance;
-
-	int *colors = (int *) malloc((image_count+1) * sizeof(int));
+	int *colors;
+	colors = (int *) malloc( (image_count+1) * sizeof(int));
 	if(colors == NULL) { fprintf(stderr,"Malloc Error\n"); exit(2); }
 	
 	for(v_start = 1; v_start <= image_count; v_start++)
@@ -292,6 +292,7 @@ void BFS(int **connections, int image_count)
 		{
 			for(v = 1; v <= image_count; v++)
 				colors[v] = WHITE;
+			
 			distance = 0;
 			v = v_start;
 			colors[v] = GRAY;
