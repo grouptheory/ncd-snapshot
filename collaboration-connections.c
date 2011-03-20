@@ -54,18 +54,23 @@ float array[ARRAYSIZE_IMAGES+1][ARRAYSIZE_IMAGES+1][ARRAYSIZE_TIME+1];
 struct QueueNode
 {
 	int QueueItem;
-	QueueNode *next;
+	struct QueueNode *next;
 };
+typedef struct QueueNode QueueNode;
+
 QueueNode *Qhead;
 QueueNode *Qtail;
 		
+//Qhead = NULL;
+//Qtail = NULL;
+
 int isEmpty() { return (Qtail == NULL);}
 
 void enqueue(const int item)
 {
 	struct QueueNode *newNode = malloc(sizeof(QueueNode)); //allocate node and memory
 	
-	strcpy(newNode->QueueItem, item); //copy item into newNode data space
+	newNode->QueueItem = item; //copy item into newNode data space
 	newNode->next = NULL; //assign Null pointer to newNode
 	
 	if(isEmpty()) Qhead = newNode; //YAY First Node
@@ -80,7 +85,7 @@ int dequeue(int item)
 {
 	if(!isEmpty())
 	{
-		strcpy(item, Qhead->QueueItem);
+		item = Qhead->QueueItem;
 		if(Qhead == Qtail) { Qhead = Qtail = NULL;} //special case to empty out queue
 		else
 		{
