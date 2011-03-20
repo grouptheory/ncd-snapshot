@@ -254,6 +254,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	}
 	
 	for (x=1; x<=image_count; x++) {
+		printf("%d :", x);
 		for(y=1; y<=image_count; y++)
 		{
 			//fprintf(stderr,"%d x %d\n",x,y);
