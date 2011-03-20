@@ -300,13 +300,12 @@ void BFS(int **connections, int image_count)
 			{
 				if(dequeue(&u) == -1) {printf("Error with dequeue!\n"); exit(2); }
 				
-				fprintf(stderr, "Dequeue %d\n", u);
+				//fprintf(stderr, "Dequeue %d\n", u);
 				for(x=1; x<= image_count; x++)
 				{
 					if(connections[u][x] > 0)
 					{
 						v = x;
-						fprintf(stderr,"V %d\n", v);
 						if(colors[v] == WHITE)
 						{
 							colors[v] = GRAY;
@@ -314,7 +313,6 @@ void BFS(int **connections, int image_count)
 						}				
 					}
 				}//for x	
-				fprintf(stderr,"Break\n"); exit(1);
 				colors[u] = BLACK;
 				distance++;
 				printf("%d ",u);
