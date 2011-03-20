@@ -297,10 +297,10 @@ void BFS(int **connections, int image_count)
 			v = v_start;
 			colors[v] = GRAY;
 			enqueue(v);
-			fprintf(stderr,"Break\n"); exit(1);
 			while(!QisEmpty())
 			{
 				dequeue(u);
+			fprintf(stderr,"Break\n"); exit(1);
 				for(x=1; x<= image_count; x++)
 				{
 					if(connections[u][y] == 1)
