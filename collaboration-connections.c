@@ -286,6 +286,7 @@ void BFS(int **connections, int image_count)
 			printf("%d, ",connections[x][y]);
 		}
 		printf("\n");
+	}
 	/*
 	int *colors = (int *) malloc((image_count+1) * sizeof(int));
 	
