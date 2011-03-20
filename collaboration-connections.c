@@ -248,8 +248,9 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	{
 			image_one = atoi(row[0]);
 			image_two = atoi(row[1]);
-			//collaboration_num = atof(row[2]);
-			connections[image_one][image_two] = 1;
+			collaboration_num = atof(row[2]);
+			if(collaboration_num > 0 )
+				connections[image_one][image_two] = 1;
 	}
 	
 	for (x=0; x<=image_count; x++) {
