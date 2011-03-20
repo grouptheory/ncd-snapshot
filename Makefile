@@ -4,7 +4,7 @@ LIBS = -L/usr/lib/mysql/ -lmysqlclient
 
 DEFINES = -DDEFAULT_USER=\"snapshot\" -DDEFAULT_PASS=\"snapshot\" -DNOSPIN
 
-all: snapshot query simpleshowdata anomaly collaboration anomaly-curve company collaboration-csv distance collaboration3d collaboration-graph
+all: snapshot query simpleshowdata anomaly collaboration anomaly-curve company collaboration-csv distance collaboration3d collaboration-graph collaboration-connections
 
 snapshot:
 	$(CC)  snapshot.c hashFunctions.c mysql.c -o snapshot -lssl $(LIBS) $(DEFINES)
@@ -39,6 +39,9 @@ anomaly-curve:
 company: 
 	$(CC)  company.c -o company
 
+collaboration-connect:
+	$(CC)  collaboration-connections.c mysql.c -o collaboration-connections $(LIBS) $(DEFINES)
+
 	
 clean:
 	rm snapshot 
@@ -47,6 +50,7 @@ clean:
 	rm anomaly
 	rm collaboration
 	rm collaboration-3d
+	rm collaboration-graph
 	rm anomaly-curve
 	rm company
 	rm ./collaboration-graphing/collaboration-csv
