@@ -22,6 +22,8 @@
 #define NCD_RESULT_TABLENAME "NCD_result"
 #define PASS_SIZE 100
 
+short int **connections; //Global Array to track Connections
+
 void printhelp();
 
 //MySQL Login Information
@@ -155,7 +157,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	int image_one;
 	int image_two;
 	float collaboration_num;
-	short int **connections;
+	
 	int image_count,x,y;
 
 	//Create Array - Find how many images we have to create array
@@ -180,8 +182,8 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 		connections[x] = (short int*) malloc(image_count+1*sizeof(short int));
    
    
-	for (x=0; x<image_count; x++) {
-		for(y=0; y<image_count; y++)
+	for (x=0; x<=image_count; x++) {
+		for(y=0; y<=image_count; y++)
 		{
 			fprintf(stderr,"%d x %d\n",x,y);
 			connections[x][y] = 0;
