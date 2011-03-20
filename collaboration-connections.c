@@ -314,7 +314,7 @@ void BFS(int **connections, int image_count)
 					}
 				}//for x	
 				colors[u] = BLACK;
-				if(distance == 0) printf("%d ",u);
+				if(distance == 0) printf("%d",u);
 				else printf("->%d", u);
 				distance++;
 					
