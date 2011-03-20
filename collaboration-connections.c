@@ -182,6 +182,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	for (x=0; x<image_count; x++) {
 		for(y=0; y<image_count; y++)
 		{
+			fprintf(stderr,"%d x %d\n",x,y);
 			connections[x][y] = 0;
 		}
 	}
