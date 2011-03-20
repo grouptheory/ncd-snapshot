@@ -172,9 +172,9 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	else { printf("Error getting count of images.\n"); exit(1); }
 	while( (row = mysql_fetch_row(res)) != NULL);
 	
-	image_count = 20;
+	image_count = 400;
 	printf("Creating matrix for %d images.\n", image_count);
-	connections = (short int**) malloc (image_count+1 * sizeof(short int));
+	connections = (short int**) malloc (image_count+1 * sizeof(short int *));
 	
 	for (x = 0; x <= image_count; x++)
 		connections[x] = (short int*) malloc(image_count+1*sizeof(short int));
