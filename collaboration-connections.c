@@ -458,19 +458,18 @@ int main(int argc, char *argv[] )
 	if(password == NULL) password = DEFAULT_PASS;
 	if(user_name == NULL) user_name = DEFAULT_USER;
 	
-	FILE *outgraph;
-	snprintf(filename,255,"graph-%05d.dat",query_number);
-	if( (outgraph= fopen(filename, "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n",filename); }
+	//FILE *outgraph;
+	//snprintf(filename,255,"graph-%05d.dat",query_number);
+	//if( (outgraph= fopen(filename, "w")) == NULL) { fprintf(stderr,"Can't open file. %s\n",filename); }
 
-	fprintf(outgraph,"Graph\n{\n");
-	
+		
 	conn = mysql_connect(host_name,user_name,password,db_name, port_num, socket_name, 0);
 	if(conn == NULL) { fprintf(stderr,"[Main] Error opening MySQL Connection.\n"); exit(1); }
 	initTables(conn, query_number);
-	getTabledata(conn, outgraph, "Collaborative_Result_Temp", query_number);
+	getTabledata(conn, NULL, "Collaborative_Result_Temp", query_number);
 	fprintf(outgraph,"\n}\n");
 	
-	fclose(outgraph);
+	//fclose(outgraph);
 	mysql_close(conn);
     return(0);
 }
