@@ -303,7 +303,7 @@ void BFS(int **connections, int image_count)
 
 				for(x=1; x<= image_count; x++)
 				{
-					if(connections[u][y] == 1)
+					if(connections[u][x] == 1)
 					{
 						v = x;
 						if(colors[v] == WHITE)
@@ -313,7 +313,7 @@ void BFS(int **connections, int image_count)
 						}				
 					}
 				}//for x	
-				fprintf(stderr,"Break\n"); exit(1);
+				//fprintf(stderr,"Break\n"); exit(1);
 				colors[u] = BLACK;
 				distance++;
 				printf("%d ",u);
