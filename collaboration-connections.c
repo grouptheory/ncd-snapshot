@@ -293,11 +293,11 @@ void BFS(int **connections, int image_count)
 			for(v = 1; v <= image_count; v++)
 				colors[v] = WHITE;
 			
-			fprintf(stderr,"Break\n"); exit(1);
 			distance = 0;
 			v = v_start;
 			colors[v] = GRAY;
 			enqueue(v);
+			fprintf(stderr,"Break\n"); exit(1);
 			while(!QisEmpty())
 			{
 				dequeue(u);
