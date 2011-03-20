@@ -36,11 +36,12 @@ collaboration-csv:
 anomaly-curve:
 	$(CC)  anomaly-curve.c mysql.c -o anomaly-curve $(LIBS) $(DEFINES)
 
+collaboration-connections:
+	$(CC)  collaboration-connections.c mysql.c -o collaboration-connections $(LIBS) $(DEFINES)
+
 company: 
 	$(CC)  company.c -o company
 
-collaboration-connect:
-	$(CC)  collaboration-connections.c mysql.c -o collaboration-connections $(LIBS) $(DEFINES)
 
 	
 clean:
