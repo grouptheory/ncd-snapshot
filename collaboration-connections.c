@@ -23,6 +23,7 @@
 #define PASS_SIZE 100
 
 void printhelp();
+void BFS(int **, int);
 
 //MySQL Login Information
 char *host_name = NULL;
@@ -64,7 +65,7 @@ QueueNode *Qtail;
 //Qhead = NULL;
 //Qtail = NULL;
 
-int isEmpty() { return (Qtail == NULL);}
+int QisEmpty() { return (Qtail == NULL);}
 
 void enqueue(const int item)
 {
@@ -73,7 +74,7 @@ void enqueue(const int item)
 	newNode->QueueItem = item; //copy item into newNode data space
 	newNode->next = NULL; //assign Null pointer to newNode
 	
-	if(isEmpty()) Qhead = newNode; //YAY First Node
+	if(QisEmpty()) Qhead = newNode; //YAY First Node
 	else Qtail->next = newNode; //Have current last location (tail) face or point to new Node
 	
 	//have new node become tail
@@ -83,7 +84,7 @@ void enqueue(const int item)
 
 int dequeue(int item)
 {
-	if(!isEmpty())
+	if(!QisEmpty())
 	{
 		item = Qhead->QueueItem;
 		if(Qhead == Qtail) { Qhead = Qtail = NULL;} //special case to empty out queue
@@ -102,7 +103,7 @@ int dequeue(int item)
 cleanQueue()
 {
 	int temp;
-	while(!isEmpty())
+	while(!QisEmpty())
 		dequeue(temp);
 }//end destructor
 
@@ -229,7 +230,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	   
 	for (x=0; x<=image_count; x++) {
 		for(y=0; y<=image_count; y++)
-		{
+		{	
 			//fprintf(stderr,"%d x %d\n",x,y);
 			connections[x][y] = 0;
 		}
@@ -249,7 +250,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 			image_one = atoi(row[0]);
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
-			if(collaboration_num > 0 )
+			if(collaboration_num > 0 && image_one != image_two)
 				connections[image_one][image_two] = 1;
 	}
 	
@@ -263,10 +264,55 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 		printf("\n");
 	}
 	
+	BFS(connections, image_count);
 	
 	
 }
 
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
+
+void BFS(int **connections, int image_count)
+{
+	int v_start,v,u,x,y, distance;
+	int *colors = (int *) malloc((image_count+1) * sizeof(int));
+	
+	for(v_start = 1; v_start <= image_count; v_start++)
+	{
+		
+		for(v = 1; v <= image_count; v++)
+			colors[v] = WHITE;
+		distance = 0;
+		v = v_start;
+		colors[v] = GRAY;
+		enqueue(v);
+		while(!QisEmpty())
+		{
+			dequeue(u);
+			for(x=1; x<= image_count; x++)
+			{
+				if(connections[u][y] == 1)
+				{
+					v = x;
+					if(colors[v] == WHITE)
+					{
+						colors[v] = GRAY;
+						enqueue(v);
+					}
+				
+				}
+			}//for x	
+			colors[u] = BLACK;
+			distance++;
+			printf("%d ");
+				
+		}
+		printf("\t Distance:%d\n",distance);
+		
+	}//v_count
+
+}
 
 
 static const char *groups[] = {"client", 0};
