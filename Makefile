@@ -56,3 +56,4 @@ clean:
 	rm company
 	rm ./collaboration-graphing/collaboration-csv
 	rm distance
+	rm collaboration-connections

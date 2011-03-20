@@ -173,7 +173,8 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	
 	printf("Creating matrix for %d images.\n", image_count);
 	connections = (short int**) malloc (image_count+1 * sizeof(short int));
-	for (x = 0; x =< image_count; x++)
+	
+	for (x = 0; x <= image_count; x++)
 		connections[x] = (short int*) malloc(image_count+1*sizeof(short int));
    
    
