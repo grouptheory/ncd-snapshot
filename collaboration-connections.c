@@ -192,7 +192,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 		}
 	}
 	
-	/*
+	
 	//Fill Array
 	printf("Populating adjacency matrix.\n");
 	snprintf(sqlbuffer, buffersize,"select * FROM %s ",table);
@@ -208,7 +208,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 			//collaboration_num = atof(row[2]);
 			connections[image_one][image_two] = 1;
 	}
-	*/
+	
 	
 }
 
