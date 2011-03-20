@@ -22,8 +22,6 @@
 #define NCD_RESULT_TABLENAME "NCD_result"
 #define PASS_SIZE 100
 
-short int **connections; //Global Array to track Connections
-
 void printhelp();
 
 //MySQL Login Information
@@ -157,7 +155,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	int image_one;
 	int image_two;
 	float collaboration_num;
-	
+	int **connections;
 	int image_count,x,y;
 
 	//Create Array - Find how many images we have to create array
@@ -174,19 +172,23 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	else { printf("Error getting count of images.\n"); exit(1); }
 	while( (row = mysql_fetch_row(res)) != NULL);
 	
-	image_count = 400;
+	//image_count = 400;
 	printf("Creating matrix for %d images.\n", image_count);
-	connections = (short int**) malloc (image_count+1 * sizeof(short int *));
 	
-	for (x = 0; x <= image_count; x++)
-		connections[x] = (short int*) malloc(image_count+1*sizeof(short int));
-   
-   
+	connections = (int **) malloc((image_count+1) * sizeof(int *));
+	if(NULL == connections){free(connections); printf("Memory allocation failed.\n"); exit(2);}
+
+	for(x = 0; x <= image_count; x++)
+	{
+	    connections[x] = (int *) malloc((image_count+1) * sizeof(int));
+	    if(NULL == connections[x]){free(connections[x]); printf("Memory allocation failed.\n"); exit(2);}
+	}   
+	   
 	for (x=0; x<=image_count; x++) {
 		for(y=0; y<=image_count; y++)
 		{
 			fprintf(stderr,"%d x %d\n",x,y);
-			connections[x][y] = 0;
+			*connections[x][y] = 0;
 		}
 	}
 	
