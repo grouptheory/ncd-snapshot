@@ -278,52 +278,53 @@ void BFS(int **connections, int image_count)
 
 	int v_start,v,u,x,y, distance;
 
-
-	for (x=1; x<=image_count; x++) {
-		printf("%d :", x);
-		for(y=1; y<=image_count; y++)
-		{
-			printf("%d, ",connections[x][y]);
-		}
-		printf("\n");
-	}
-	/*
 	int *colors = (int *) malloc((image_count+1) * sizeof(int));
+	if(colors == NULL) { fprintf(stderr,"Malloc Error\n"); exit(2); }
 	
 	for(v_start = 1; v_start <= image_count; v_start++)
 	{
-		
-		for(v = 1; v <= image_count; v++)
-			colors[v] = WHITE;
-		distance = 0;
-		v = v_start;
-		colors[v] = GRAY;
-		enqueue(v);
-		while(!QisEmpty())
+		y = 0;
+		for(x = 1; x<=image_count; x++)
 		{
-			dequeue(u);
-			for(x=1; x<= image_count; x++)
-			{
-				if(connections[u][y] == 1)
-				{
-					v = x;
-					if(colors[v] == WHITE)
-					{
-						colors[v] = GRAY;
-						enqueue(v);
-					}
-				
-				}
-			}//for x	
-			colors[u] = BLACK;
-			distance++;
-			printf("%d ");
-				
+			if(connections[v_start][x] > 0) y++;
 		}
-		printf("\t Distance:%d\n",distance);
-		
+		if(y > 0)
+		{
+			for(v = 1; v <= image_count; v++)
+				colors[v] = WHITE;
+			distance = 0;
+			v = v_start;
+			colors[v] = GRAY;
+			enqueue(v);
+			while(!QisEmpty())
+			{
+				dequeue(u);
+				for(x=1; x<= image_count; x++)
+				{
+					if(connections[u][y] == 1)
+					{
+						v = x;
+						if(colors[v] == WHITE)
+						{
+							colors[v] = GRAY;
+							enqueue(v);
+						}
+					
+					}
+				}//for x	
+				colors[u] = BLACK;
+				distance++;
+				printf("%d ",u);
+					
+			}
+			printf("\t Distance:%d\n",distance);
+		}
+		else 
+		{
+			printf("V%d has no connections.\n", v_start);
+		}
 	}//v_count
-	*/
+	
 }
 
 
