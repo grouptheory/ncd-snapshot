@@ -156,7 +156,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	float collaboration_num;
 	
 	
-	snprintf(sqlbuffer, buffersize,"select * FROM %s ",table);
+	snprintf(sqlbuffer, buffersize,"select * FROM %s WHERE SUM > 0",table);
 	
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
@@ -167,7 +167,27 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 			image_one = atoi(row[0]);
 			image_two = atoi(row[1]);
 			collaboration_num = atof(row[2]);
-			fprintf(outfile,"IMG%d -- IMG%d [len=%d]\n",image_one,image_two,(int) (10/(collaboration_num+1)));
+			fprintf(outfile,"IMG%d -- IMG%d [len=%d];\n",image_one,image_two,(int) (10/(collaboration_num+1)));
+	}
+
+	snprintf(sqlbuffer,BIGBUFFER,"DROP TABLE IF EXISTS Inner_Temp;");
+	if (mysql_query(connread,sqlbuffer) != 0)
+		  mysql_print_error(connread);	
+	snprintf(sqlbuffer,BIGBUFFER,"CREATE TEMPORARY TABLE Inner_Temp AS select * FROM %s;", table);
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);	
+	res = mysql_use_result(connread);
+
+	snprintf(sqlbuffer, buffersize,"select DISTINCT IMG1 FROM %s WHERE SUM = 0 AND NOT IMG1 IN (SELECT IMG1 FROM Inner_Temp WHERE SUM > 0) ORDER BY IMG1;",table,table);
+	
+	if (mysql_query(connread,sqlbuffer) != 0)
+		mysql_print_error(connread);
+	res = mysql_use_result(connread);
+	
+	while( (row = mysql_fetch_row(res)) != NULL)
+	{
+			image_one = atoi(row[0]);
+			fprintf(outfile,"IMG%d;\n",image_one);
 	}
 	
 }
