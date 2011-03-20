@@ -300,7 +300,7 @@ void BFS(int **connections, int image_count)
 			while(!QisEmpty())
 			{
 				dequeue(u);
-			fprintf(stderr,"Break\n"); exit(1);
+
 				for(x=1; x<= image_count; x++)
 				{
 					if(connections[u][y] == 1)
@@ -310,10 +310,10 @@ void BFS(int **connections, int image_count)
 						{
 							colors[v] = GRAY;
 							enqueue(v);
-						}
-					
+						}				
 					}
 				}//for x	
+				fprintf(stderr,"Break\n"); exit(1);
 				colors[u] = BLACK;
 				distance++;
 				printf("%d ",u);
