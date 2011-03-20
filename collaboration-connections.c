@@ -62,9 +62,6 @@ typedef struct QueueNode QueueNode;
 QueueNode *Qhead;
 QueueNode *Qtail;
 		
-//Qhead = NULL;
-//Qtail = NULL;
-
 int QisEmpty() { return (Qtail == NULL);}
 
 void enqueue(const int item)
@@ -74,19 +71,19 @@ void enqueue(const int item)
 	newNode->QueueItem = item; //copy item into newNode data space
 	newNode->next = NULL; //assign Null pointer to newNode
 	
-	if(QisEmpty()) Qhead = newNode; //YAY First Node
-	else Qtail->next = newNode; //Have current last location (tail) face or point to new Node
+	if(QisEmpty()) Qhead = newNode; 
+	else Qtail->next = newNode; 
 	
 	//have new node become tail
 	Qtail = newNode;
 	/**/
 }//end enqueue
 
-int dequeue(int item)
+int dequeue(int *item)
 {
 	if(!QisEmpty())
 	{
-		item = Qhead->QueueItem;
+		*item = Qhead->QueueItem;
 		if(Qhead == Qtail) { Qhead = Qtail = NULL;} //special case to empty out queue
 		else
 		{
@@ -104,7 +101,7 @@ cleanQueue()
 {
 	int temp;
 	while(!QisEmpty())
-		dequeue(temp);
+		dequeue(&temp);
 }//end destructor
 
 
@@ -301,7 +298,7 @@ void BFS(int **connections, int image_count)
 			enqueue(v);
 			while(!QisEmpty())
 			{
-				if(dequeue(u) == -1) {printf("Error with dequeue!\n"); exit(2); }
+				if(dequeue(&u) == -1) {printf("Error with dequeue!\n"); exit(2); }
 				
 				fprintf(stderr, "Dequeue %d\n", u);
 				for(x=1; x<= image_count; x++)
