@@ -155,8 +155,8 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	int image_one;
 	int image_two;
 	float collaboration_num;
-	short int *connections;
-	int image_count;
+	short int **connections;
+	int image_count,x,y;
 
 	//Create Array - Find how many images we have to create array
 	snprintf(sqlbuffer, buffersize,"select DISTINCT COUNT(IMG1) FROM %s ",table);
@@ -172,7 +172,11 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	else { printf("Error getting count of images.\n"); exit(1); }
 	
 	printf("Creating matrix for %d images.\n", image_count);
-	connections = (short int**)malloc(image_count * image_count * sizeof(short int));
+	connections = (short int**) malloc (image_count * sizeof(short int));
+	for (x = 0; x < image_count; x++)
+		connections[x] = (short int*) malloc(image_count*sizeof(short int));
+   
+   
 	for (x=0; x<image_count; x++) {
 		for(y=0; y<image_count; y++)
 		{
