@@ -300,13 +300,13 @@ void BFS(int **connections, int image_count)
 			while(!QisEmpty())
 			{
 				dequeue(u);
-				fprintf("Dequeue %d\n", u);
+				fprintf(stderr, "Dequeue %d\n", u);
 				for(x=1; x<= image_count; x++)
 				{
 					if(connections[u][x] > 0)
 					{
 						v = x;
-						fprintf("V %d\n", v);
+						fprintf(stderr,"V %d\n", v);
 						if(colors[v] == WHITE)
 						{
 							colors[v] = GRAY;
