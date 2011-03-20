@@ -49,19 +49,57 @@ char cursor[4]={'/','-','\\','|'}; //For Spinning Cursor
 short SHOW_Start = 0;
 float array[ARRAYSIZE_IMAGES+1][ARRAYSIZE_IMAGES+1][ARRAYSIZE_TIME+1];
 
-char *stimeStamp(char *timeS)
-{	
-	time_t epoch;
-	time_t *epoch_ptr;
-	char timebuf[100];
-	char *timebuf_ptr = timebuf;
-	epoch_ptr = &epoch;
-	if (time(epoch_ptr) == -1) {fprintf(stderr,"Error getting TOD.\n"); exit(2); }
-	strftime(timebuf, 100, "%b %d %T",localtime(epoch_ptr));
-	strftime(timeS, 100, "%b %d %T",localtime(epoch_ptr));
-	//return strtok(asctime(localtime(epoch_ptr)), "\n");
-	return timebuf_ptr;
-}
+//Simple Queue
+
+struct QueueNode
+{
+	int QueueItem;
+	QueueNode *next;
+};
+QueueNode *Qhead;
+QueueNode *Qtail;
+		
+int isEmpty() { return (Qtail == NULL);}
+
+void enqueue(const int item)
+{
+	struct QueueNode *newNode = malloc(sizeof(QueueNode)); //allocate node and memory
+	
+	strcpy(newNode->QueueItem, item); //copy item into newNode data space
+	newNode->next = NULL; //assign Null pointer to newNode
+	
+	if(isEmpty()) Qhead = newNode; //YAY First Node
+	else Qtail->next = newNode; //Have current last location (tail) face or point to new Node
+	
+	//have new node become tail
+	Qtail = newNode;
+	/**/
+}//end enqueue
+
+int dequeue(int item)
+{
+	if(!isEmpty())
+	{
+		strcpy(item, Qhead->QueueItem);
+		if(Qhead == Qtail) { Qhead = Qtail = NULL;} //special case to empty out queue
+		else
+		{
+			QueueNode *zombie;
+			zombie = Qhead;
+			Qhead = Qhead->next;
+			free(zombie);
+		}
+		return 0;
+	}
+	return -1;
+}//end dequeue
+
+cleanQueue()
+{
+	int temp;
+	while(!isEmpty())
+		dequeue(temp);
+}//end destructor
 
 
 void initTables(MYSQL *conn, int time)
@@ -208,6 +246,16 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 			//collaboration_num = atof(row[2]);
 			connections[image_one][image_two] = 1;
 	}
+	
+	for (x=0; x<=image_count; x++) {
+		for(y=0; y<=image_count; y++)
+		{
+			//fprintf(stderr,"%d x %d\n",x,y);
+			printf("%d, ",connections[x][y]);
+		}
+		printf("\n");
+	}
+	
 	
 	
 }
