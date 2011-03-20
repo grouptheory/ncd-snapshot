@@ -178,14 +178,14 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	for (x = 0; x <= image_count; x++)
 		connections[x] = (short int*) malloc(image_count+1*sizeof(short int));
    
-   /*
-	for (x=0; x<=image_count; x++) {
-		for(y=0; y<=image_count; y++)
+   
+	for (x=0; x<image_count; x++) {
+		for(y=0; y<image_count; y++)
 		{
 			connections[x][y] = 0;
 		}
 	}
-	*/
+	
 	/*
 	//Fill Array
 	printf("Populating adjacency matrix.\n");
