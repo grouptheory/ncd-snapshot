@@ -275,7 +275,18 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 
 void BFS(int **connections, int image_count)
 {
+
 	int v_start,v,u,x,y, distance;
+
+
+	for (x=1; x<=image_count; x++) {
+		printf("%d :", x);
+		for(y=1; y<=image_count; y++)
+		{
+			printf("%d, ",connections[x][y]);
+		}
+		printf("\n");
+	/*
 	int *colors = (int *) malloc((image_count+1) * sizeof(int));
 	
 	for(v_start = 1; v_start <= image_count; v_start++)
@@ -311,7 +322,7 @@ void BFS(int **connections, int image_count)
 		printf("\t Distance:%d\n",distance);
 		
 	}//v_count
-
+	*/
 }
 
 
