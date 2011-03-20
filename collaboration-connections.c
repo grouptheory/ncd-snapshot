@@ -159,7 +159,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	int image_count,x,y;
 
 	//Create Array - Find how many images we have to create array
-	snprintf(sqlbuffer, buffersize,"select DISTINCT COUNT(IMG1) FROM %s ",table);
+	snprintf(sqlbuffer, buffersize,"select MAX(IMG1) FROM %s ",table);
 		
 	if (mysql_query(connread,sqlbuffer) != 0)
 		mysql_print_error(connread);
@@ -187,7 +187,7 @@ void getTabledata(MYSQL *connread, FILE *outfile, char *table, int time)
 	for (x=0; x<=image_count; x++) {
 		for(y=0; y<=image_count; y++)
 		{
-			fprintf(stderr,"%d x %d\n",x,y);
+			//fprintf(stderr,"%d x %d\n",x,y);
 			connections[x][y] = 0;
 		}
 	}
