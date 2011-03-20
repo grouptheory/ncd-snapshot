@@ -69,7 +69,7 @@ int QisEmpty() { return (Qtail == NULL);}
 
 void enqueue(const int item)
 {
-	struct QueueNode *newNode = malloc(sizeof(QueueNode)); //allocate node and memory
+	QueueNode *newNode = malloc(sizeof(QueueNode)); //allocate node and memory
 	
 	newNode->QueueItem = item; //copy item into newNode data space
 	newNode->next = NULL; //assign Null pointer to newNode
@@ -296,10 +296,13 @@ void BFS(int **connections, int image_count)
 			distance = 0;
 			v = v_start;
 			colors[v] = GRAY;
+			cleanQueue();
+			
 			enqueue(v);
 			while(!QisEmpty())
 			{
-				dequeue(u);
+				if(dequeue(u) == -1) {printf("Error with dequeue!\n"); exit(2); }
+				
 				fprintf(stderr, "Dequeue %d\n", u);
 				for(x=1; x<= image_count; x++)
 				{
@@ -387,7 +390,8 @@ int main(int argc, char *argv[] )
 	MYSQL *conn = NULL;
     //Setup for MySQL Init File
     my_init();
-    
+	Qhead = NULL;
+	Qtail = NULL;
 	
     //Load Defaults -- adds file contents to arugment list - Thanks MySql
     load_defaults("snapshot", groups, &argc, &argv);
