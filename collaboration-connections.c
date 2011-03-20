@@ -467,7 +467,7 @@ int main(int argc, char *argv[] )
 	if(conn == NULL) { fprintf(stderr,"[Main] Error opening MySQL Connection.\n"); exit(1); }
 	initTables(conn, query_number);
 	getTabledata(conn, NULL, "Collaborative_Result_Temp", query_number);
-	fprintf(outgraph,"\n}\n");
+	
 	
 	//fclose(outgraph);
 	mysql_close(conn);
