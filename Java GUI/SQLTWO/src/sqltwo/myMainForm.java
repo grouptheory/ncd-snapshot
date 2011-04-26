@@ -50,6 +50,8 @@ import org.jfree.data.xy.XYSeriesCollection;
  */
 public class myMainForm extends javax.swing.JFrame {
 
+    public static MyJiggle jigform = null;
+
     /** Creates new form myMainForm */
     public myMainForm() {
         initComponents();
@@ -218,6 +220,14 @@ public class myMainForm extends javax.swing.JFrame {
 
         SQLBuffer = "select * FROM " + Collab_table + " WHERE SUM > 0;";
 
+        global.resultArray = new float [global.imageCount][global.imageCount];
+     //Zero Out
+        for(int i = 0; i < global.imageCount; i++)
+            for(int j = 0; j < global.imageCount; j++)
+            {
+                global.resultArray[i][j] = 0F;
+            }
+
         try
         {
           rs = stmt.executeQuery(SQLBuffer);
@@ -227,7 +237,7 @@ public class myMainForm extends javax.swing.JFrame {
             imageOne = rs.getInt(1);
             imageTwo = rs.getInt(2);
             collab_score = rs.getFloat(3);
-
+            global.resultArray[imageOne-1][imageTwo-1] = collab_score;
             System.out.println("IMG" + imageOne + "\tIMG" + imageTwo +"\t"+collab_score);
           }
           if (stmt != null) { stmt.close(); }
@@ -260,6 +270,10 @@ public class myMainForm extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jExitButton = new javax.swing.JButton();
         jUpdateButton = new javax.swing.JButton();
+        jigOptBox = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        jScrambleButton = new javax.swing.JButton();
+        jOptimizeButton = new javax.swing.JButton();
         jCurveSlider = new javax.swing.JSlider();
         jCutoffSlider = new javax.swing.JSlider();
         jCutoffLabel = new javax.swing.JLabel();
@@ -290,7 +304,7 @@ public class myMainForm extends javax.swing.JFrame {
 
         jPanelCutoff.setBackground(new java.awt.Color(204, 255, 204));
 
-        jGraphCutoffLabel.setFont(new java.awt.Font("Lucida Grande", 2, 10)); // NOI18N
+        jGraphCutoffLabel.setFont(new java.awt.Font("Lucida Grande", 2, 10));
         jGraphCutoffLabel.setText("Please Initialize Graph");
 
         org.jdesktop.layout.GroupLayout jPanelCutoffLayout = new org.jdesktop.layout.GroupLayout(jPanelCutoff);
@@ -305,7 +319,7 @@ public class myMainForm extends javax.swing.JFrame {
         jPanelCutoffLayout.setVerticalGroup(
             jPanelCutoffLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanelCutoffLayout.createSequentialGroup()
-                .addContainerGap(44, Short.MAX_VALUE)
+                .addContainerGap(56, Short.MAX_VALUE)
                 .add(jGraphCutoffLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 288, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(30, 30, 30))
         );
@@ -313,7 +327,7 @@ public class myMainForm extends javax.swing.JFrame {
         jPanelCurve.setBackground(new java.awt.Color(204, 255, 204));
         jPanelCurve.setSize(new java.awt.Dimension(310, 310));
 
-        jAnomalyGraphLabel.setFont(new java.awt.Font("Lucida Grande", 2, 10)); // NOI18N
+        jAnomalyGraphLabel.setFont(new java.awt.Font("Lucida Grande", 2, 10));
         jAnomalyGraphLabel.setText("Please Initialize Graph");
 
         org.jdesktop.layout.GroupLayout jPanelCurveLayout = new org.jdesktop.layout.GroupLayout(jPanelCurve);
@@ -330,7 +344,7 @@ public class myMainForm extends javax.swing.JFrame {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanelCurveLayout.createSequentialGroup()
                 .add(33, 33, 33)
                 .add(jAnomalyGraphLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                .add(29, 29, 29))
+                .add(41, 41, 41))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -358,36 +372,67 @@ public class myMainForm extends javax.swing.JFrame {
             }
         });
 
+        jigOptBox.setText("100");
+
+        jLabel7.setText("Jiggle Opt:");
+
+        jScrambleButton.setText("Scramble");
+        jScrambleButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jScrambleButtonActionPerformed(evt);
+            }
+        });
+
+        jOptimizeButton.setText("Optimize");
+        jOptimizeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jOptimizeButtonActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(96, 96, 96)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(jLabel3)
-                        .add(30, 30, 30))
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(jUpdateButton)
-                        .add(18, 18, 18)))
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(QueryNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jExitButton))
-                .add(66, 66, 66))
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(jLabel3)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(QueryNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel7)
+                        .add(6, 6, 6)
+                        .add(jigOptBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(15, 15, 15)
+                        .add(jUpdateButton)
+                        .add(18, 18, 18)
+                        .add(jScrambleButton)
+                        .add(18, 18, 18)
+                        .add(jOptimizeButton))
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(133, 133, 133)
+                        .add(jExitButton)))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(33, 33, 33)
+                .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel3)
                     .add(QueryNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel3))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jigOptBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel7))
+                .add(18, 18, 18)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jExitButton)
-                    .add(jUpdateButton))
-                .add(33, 33, 33))
+                    .add(jScrambleButton)
+                    .add(jUpdateButton)
+                    .add(jOptimizeButton))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 18, Short.MAX_VALUE)
+                .add(jExitButton))
         );
 
         jCurveSlider.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -464,10 +509,6 @@ public class myMainForm extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .add(107, 107, 107)
-                .add(jSQLButton)
-                .addContainerGap(117, Short.MAX_VALUE))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
                 .add(35, 35, 35)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -481,7 +522,11 @@ public class myMainForm extends javax.swing.JFrame {
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jSQLUser)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jSQLPort)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jSQLIP, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 102, Short.MAX_VALUE))
-                .add(37, 37, 37))
+                .add(73, 73, 73))
+            .add(jPanel1Layout.createSequentialGroup()
+                .add(118, 118, 118)
+                .add(jSQLButton)
+                .addContainerGap(142, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -501,9 +546,9 @@ public class myMainForm extends javax.swing.JFrame {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jSQLPass, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel11))
-                .add(18, 18, 18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 18, Short.MAX_VALUE)
                 .add(jSQLButton)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -520,7 +565,7 @@ public class myMainForm extends javax.swing.JFrame {
                                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                                             .add(jPanel1, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 332, Short.MAX_VALUE))
+                                            .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                         .add(18, 18, 18)
                                         .add(jPanelCutoff, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
@@ -607,7 +652,7 @@ public class myMainForm extends javax.swing.JFrame {
                                 .add(jSlopeLabel)
                                 .add(78, 78, 78))
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 9, Short.MAX_VALUE)
                                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                                     .add(jLabel6)
                                     .add(jCutoffSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -645,6 +690,7 @@ public class myMainForm extends javax.swing.JFrame {
     public void doUpdate()
     {
 
+        boolean doJigUpdate = false;
         //Check if empty - if yes - use default or last.
         if (QueryNumber.getText().equals("")) {
             QueryNumber.setText(global.queryNum + "");
@@ -665,6 +711,9 @@ public class myMainForm extends javax.swing.JFrame {
             jSlopeSlider.setMaximum(global.imageCount * 2);
             jSlopeSlider.setValue(global.imageCount / 2);
             jSlopeLabel.setText(global.imageCount / 2 + "") ;
+            jigform = new MyJiggle(global.imageCount);
+
+
         }
         //Check if there is a change - if so update and update graph
         if( (QueryNum != global.queryNum) || (global.firstrun == true))
@@ -674,16 +723,21 @@ public class myMainForm extends javax.swing.JFrame {
             makeGraphCutoff();
             makeGraphAnomaly();
             global.firstrun = false;
+            doJigUpdate = true;
         }
 
 
         //SQL Output - Temp Test Code
-
         System.out.println("Test Out:" + global.queryNum + " " + global.cutoff + " " + global.imageCount);
         makeAnomalyTable();
         SetupTables(global.conn, global.queryNum , global.cutoff , global.imageCount );
         showGdata(global.conn);
+        //jigform.updateData(global.imageCount, global.resultArray);
+        if(doJigUpdate) { jigform.updateData(global.imageCount, global.resultArray); doJigUpdate = false; }
+        else jigform.refresh(global.resultArray);
+
     }
+
     private void jUpdateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jUpdateButtonActionPerformed
         doUpdate();
     }//GEN-LAST:event_jUpdateButtonActionPerformed
@@ -798,6 +852,20 @@ public class myMainForm extends javax.swing.JFrame {
 
        doUpdate();
     }//GEN-LAST:event_jSQLButtonActionPerformed
+
+    private void jScrambleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jScrambleButtonActionPerformed
+        // TODO add your handling code here:
+        jigform.doScramble();
+    }//GEN-LAST:event_jScrambleButtonActionPerformed
+
+    private void jOptimizeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jOptimizeButtonActionPerformed
+        // TODO add your handling code here:
+        jigform.optimizeTime = Integer.parseInt(jigOptBox.getText());
+        jigform.doOptimize();
+        
+
+
+    }//GEN-LAST:event_jOptimizeButtonActionPerformed
 
     private void setGraphSlider() {
         String SQLBuffer = "select COUNT(ncd_key) AS Count FROM NCD_table WHERE querynumber = "+ global.queryNum + ";";
@@ -957,6 +1025,7 @@ public class myMainForm extends javax.swing.JFrame {
         public static boolean firstrun = true;
         public static int graphCutoff = 500;
         public static float[] AnomalyYarray;
+        public static float[][] resultArray;
 
     }
 
@@ -978,9 +1047,11 @@ public class myMainForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JSlider jMaxSlider;
+    private javax.swing.JButton jOptimizeButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanelCurve;
@@ -990,9 +1061,11 @@ public class myMainForm extends javax.swing.JFrame {
     private javax.swing.JPasswordField jSQLPass;
     private javax.swing.JTextField jSQLPort;
     private javax.swing.JTextField jSQLUser;
+    private javax.swing.JButton jScrambleButton;
     private javax.swing.JLabel jSlopeLabel;
     private javax.swing.JSlider jSlopeSlider;
     private javax.swing.JButton jUpdateButton;
+    private javax.swing.JTextField jigOptBox;
     // End of variables declaration//GEN-END:variables
 
 }
