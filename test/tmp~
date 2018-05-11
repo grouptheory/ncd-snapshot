@@ -1,0 +1,34 @@
+
+for i in `seq 1 $TOTAL`;
+do
+	echo ${NAME}${i}
+        SEEDX=$(cat SEED-X)
+        SEEDY=$(cat SEED-Y)
+        echo Our seed X is $SEEDX
+        echo Our seed Y is $SEEDY
+	./company -d 1 --seedx $SEEDX --seedy $SEEDY -C $CONSPIRACY
+	mkdir ${NAME}${i}
+	cp -R person* ${NAME}${i}
+	cd ${NAME}${i}
+	TEMPC=0
+	for f in person-*;
+	do
+		echo "Processing $f";
+		if [ "$TEMPC" -eq "0" ]
+			then
+			../../snapshot -u $USER -p $PASS -N -c 0 -i "Rich" -m ${NAME}${i} ${DIR}${NAME}${i}/${f}/
+			TEMPC=1
+			else
+			../../snapshot  -u $USER -p $PASS -c $i -i "Rich" -m ${NAME}${i} ${DIR}${NAME}${i}/${f}/
+		fi
+	done
+	cd ..
+	time ../query  -u $USER -p $PASS -K $i -q
+	time ../ncd -N -u $USER -p $PASS -c 32000 -q
+done
+
+
+
+if [ -z "$1" ]; then
+        echo usage: $0 SEEDX SEEDY
+        exit

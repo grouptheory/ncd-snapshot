@@ -48,7 +48,7 @@ do
 	done
 	cd ..
 	time ../query  -u $USER -p $PASS -K $i -q
-	time ../ncd -N -u $USER -p $PASS -c 32000 -q
+	time ../distance -N -u $USER -p $PASS -c 32000 -q
 done
 
 

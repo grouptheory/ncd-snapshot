@@ -1,5 +1,5 @@
 CC = gcc
-LIBS = -lm -lzip
+LIBS = -lm -lz
 #LIBS = -lm -L/usr/bin -lcygz
 
 #DEFINES = -DDEFAULT_USER=\"snapshot\" -DDEFAULT_PASS=\"snapshot\" -DNOSPIN
@@ -7,7 +7,7 @@ LIBS = -lm -lzip
 all: libncd test
 
 test:
-	$(CC) -rdynamic -ldl  test.c -o test
+	$(CC) -L/usr/lib -rdynamic -ldl  test.c -o test
 #	$(LIBS) $(DEFINES)
 
 

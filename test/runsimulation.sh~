@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+TOTAL=10
+NAME="duration"
+DIR="/home/bkhan/dev/ncd-snapshot/test"
+TEMPC=0
+USER="snapshot"
+PASS="snapshot"
+CONSPIRACY=4
+
+rm -rf duration* person* SEED*
+
+#Start first part of creation
+./company -c -d 0 -C $CONSPIRACY --seedx $1 --seedy $2
+mkdir ${NAME}0
+cp -R person* ${NAME}0
+
+#intialize
+../snapshot -u $USER -p $PASS -I
+../query -u $USER -p $PASS -I
+

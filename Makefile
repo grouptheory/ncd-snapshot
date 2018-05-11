@@ -1,6 +1,6 @@
 CC = gcc
-#LIBS = -lssl -lmysqlclient
-LIBS = -L/usr/lib/mysql/ -lmysqlclient
+LIBS = -L/usr/lib -lssl -lmysqlclient
+#LIBS = -L/usr/lib/mysql/ -lmysqlclient
 
 DEFINES = -DDEFAULT_USER=\"snapshot\" -DDEFAULT_PASS=\"snapshot\" -DNOSPIN
 
@@ -13,8 +13,8 @@ query:
 	$(CC)  query.c hashFunctions.c mysql.c -o query $(LIBS) $(DEFINES)
 
 distance:
-	$(CC)  distance.c mysql.c -o distance -rdynamic -lpthread -ldl $(LIBS) $(DEFINES)
-	
+	$(CC)  distance.c mysql.c -o distance -L/usr/lib -rdynamic -lpthread -ldl $(LIBS) $(DEFINES)
+
 simpleshowdata:
 	$(CC)  simpleshowdata.c mysql.c -o simpleshowdata $(LIBS) $(DEFINES)
 
@@ -43,7 +43,7 @@ company:
 	$(CC)  company.c -o company
 
 
-	
+
 clean:
 	rm snapshot 
 	rm query
